@@ -2,34 +2,15 @@
 global.__DEV__ = true;
 
 // Mock React Native
-jest.mock('react-native', () => {
-  const RN = jest.requireActual('react-native');
-
-  // Mock Animated values
-  RN.Animated.Value = jest.fn(() => ({
-    setValue: jest.fn(),
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    interpolate: jest.fn(() => ({
-      setValue: jest.fn(),
-    })),
-  }));
-
-  RN.Animated.timing = jest.fn(() => ({
-    start: jest.fn(callback => callback && callback()),
-  }));
-
-  RN.Animated.spring = jest.fn(() => ({
-    start: jest.fn(callback => callback && callback()),
-  }));
-
-  RN.Animated.View = 'Animated.View';
-  RN.Animated.Text = 'Animated.Text';
-
-  // Mock PanResponder
-  RN.PanResponder.create = jest.fn(() => ({
-    panHandlers: {},
-  }));
-
-  return RN;
-});
+// Patch internal AnimatedValue used by TouchableOpacity and other components
+try {
+  // Use generic require to handle default/named exports
+  const AnimatedValue = require('react-native/Libraries/Animated/nodes/AnimatedValue');
+  const Value = AnimatedValue.default || AnimatedValue;
+  if (Value && !Value.prototype.resetAnimation) {
+    Value.prototype.resetAnimation = function() {};
+  }
+} catch (e) {
+  // Ignore error if path is wrong, but log it for debugging
+  console.log('Failed to patch AnimatedValue:', e.message);
+}

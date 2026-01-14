@@ -100,10 +100,9 @@ Toast.show({
 
 | Prop           | Type                                 | Default     | Description                                               |
 | -------------- | ------------------------------------ | ----------- | --------------------------------------------------------- |
-| `config`       | `Partial<ToastConfig>`               | `undefined` | Default configuration for all toasts                      |
+| `config`       | `ToastConfig`                        | `undefined` | Map of toast types to render functions                    |
 | `topOffset`    | `number`                             | `40`        | Top offset for positioning (when position is 'top')       |
 | `bottomOffset` | `number`                             | `40`        | Bottom offset for positioning (when position is 'bottom') |
-| `renderToast`  | `(config: ToastConfig) => ReactNode` | `undefined` | Custom render function for toasts                         |
 
 ### Toast Methods
 
@@ -246,21 +245,10 @@ Toast.success('New Message', 'Tap to view', {
 });
 ```
 
-### Global Configuration
+### Global Customization
 
-Set default options for all toasts:
+To customize the default appearance globally, you can provide custom renderers in the `config` prop of `ToastContainer` as shown above.
 
-```tsx
-<ToastContainer
-  config={{
-    position: 'bottom',
-    duration: 5000,
-    animationDuration: 500,
-  }}
-  topOffset={60}
-  bottomOffset={60}
-/>
-```
 
 ### Custom Toast Renderer
 
@@ -268,23 +256,27 @@ For complete control over toast appearance:
 
 ```tsx
 import { View, Text } from 'react-native';
-import { ToastContainer, ToastConfig } from 'react-native-toast-message-ts';
+import { ToastContainer, ToastConfigParams } from 'react-native-toast-message-ts';
 
-const renderCustomToast = (config: ToastConfig) => (
-  <View
-    style={{
-      backgroundColor: '#000',
-      padding: 20,
-      borderRadius: 10,
-      margin: 20,
-    }}
-  >
-    <Text style={{ color: '#fff', fontSize: 18 }}>{config.text1}</Text>
-    {config.text2 && <Text style={{ color: '#ccc', fontSize: 14 }}>{config.text2}</Text>}
-  </View>
-);
+const toastConfig = {
+  custom: ({ text1, text2 }: ToastConfigParams) => (
+    <View
+      style={{
+        backgroundColor: '#000',
+        padding: 20,
+        borderRadius: 10,
+        margin: 20,
+      }}
+    >
+      <Text style={{ color: '#fff', fontSize: 18 }}>{text1}</Text>
+      {text2 && <Text style={{ color: '#ccc', fontSize: 14 }}>{text2}</Text>}
+    </View>
+  ),
+  // You can overwrite default types too
+  success: (props: ToastConfigParams) => <BaseToast {...props} style={{ borderLeftColor: 'pink' }} />
+};
 
-<ToastContainer renderToast={renderCustomToast} />;
+<ToastContainer config={toastConfig} />;
 ```
 
 ## 🎭 Toast Types

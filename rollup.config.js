@@ -30,6 +30,8 @@ export default {
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
       exclude: 'node_modules/**',
       presets: ['@babel/preset-react', '@babel/preset-typescript'],
+      babelrc: false,
+      configFile: false,
     }),
     typescript({
       tsconfig: './tsconfig.json',

@@ -1,6 +1,6 @@
-import { ToastShowParams, ToastConfig } from './types';
+import { ToastShowParams, ToastData } from './types';
 
-type Listener = (config: ToastConfig) => void;
+type Listener = (data: ToastData) => void;
 
 class ToastManager {
   private listeners: Set<Listener> = new Set();
@@ -30,12 +30,12 @@ class ToastManager {
    * Show a toast
    */
   show(params: ToastShowParams): void {
-    const config: ToastConfig = {
+    const data: ToastData = {
       ...params,
       isVisible: true,
     };
 
-    this.listeners.forEach(listener => listener(config));
+    this.listeners.forEach(listener => listener(data));
   }
 
   /**
@@ -89,6 +89,14 @@ class ToastManager {
   /**
    * Hide the currently visible toast
    */
+  /**
+   * Remove all listeners
+   */
+  clearAll(): void {
+    this.listeners.clear();
+    this.hideListeners.clear();
+  }
+
   hide(): void {
     this.hideListeners.forEach(listener => listener());
   }

@@ -4,7 +4,56 @@ import { ToastContainer } from '../ToastContainer';
 import { toastManager } from '../ToastManager';
 import { Text } from 'react-native';
 
+jest.mock('../components/SuccessToast', () => {
+  const { Text, View } = require('react-native');
+  return {
+    SuccessToast: (props: any) => (
+      <View>
+        <Text>{props.text1}</Text>
+        {props.text2 && <Text>{props.text2}</Text>}
+      </View>
+    ),
+  };
+});
+jest.mock('../components/ErrorToast', () => {
+  const { Text, View } = require('react-native');
+  return {
+    ErrorToast: (props: any) => (
+      <View>
+        <Text>{props.text1}</Text>
+        {props.text2 && <Text>{props.text2}</Text>}
+      </View>
+    ),
+  };
+});
+jest.mock('../components/InfoToast', () => {
+  const { Text, View } = require('react-native');
+  return {
+    InfoToast: (props: any) => (
+      <View>
+        <Text>{props.text1}</Text>
+        {props.text2 && <Text>{props.text2}</Text>}
+      </View>
+    ),
+  };
+});
+jest.mock('../components/BaseToast', () => {
+  const { Text, View } = require('react-native');
+  return {
+    BaseToast: (props: any) => (
+      <View>
+        <Text>{props.text1}</Text>
+        {props.text2 && <Text>{props.text2}</Text>}
+      </View>
+    ),
+  };
+});
+
 describe('ToastContainer', () => {
+  beforeEach(() => {
+    toastManager.clearAll();
+  });
+
   it('should render nothing initially', () => {
     const { UNSAFE_root } = render(<ToastContainer />);
     expect(UNSAFE_root.children.length).toBe(0);
@@ -108,12 +157,19 @@ describe('ToastContainer', () => {
   });
 
   it('should use custom renderToast function', async () => {
-    const renderToast = jest.fn(() => <Text>Custom Toast</Text>);
+    const renderToast = jest.fn(({ text1 }: any) => <Text>{text1}</Text>);
 
-    const { getByText } = render(<ToastContainer renderToast={renderToast} />);
+    const { getByText } = render(
+      <ToastContainer
+        config={{
+          info: renderToast,
+        }}
+      />,
+    );
 
     toastManager.show({
-      text1: 'Test Toast',
+      type: 'info',
+      text1: 'Custom Toast',
     });
 
     await waitFor(() => {
