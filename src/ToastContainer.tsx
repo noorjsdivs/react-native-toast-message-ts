@@ -19,7 +19,9 @@ const defaultComponents: ToastConfig = {
   error: (props: ToastConfigParams) => <ErrorToast {...props} />,
   info: (props: ToastConfigParams) => <InfoToast {...props} />,
   base: (props: ToastConfigParams) => <BaseToast {...props} />,
-  warning: (props: ToastConfigParams) => <BaseToast {...props} style={{ borderLeftColor: '#ffc107', borderLeftWidth: 5 }} />,
+  warning: (props: ToastConfigParams) => (
+    <BaseToast {...props} style={{ borderLeftColor: '#ffc107', borderLeftWidth: 5 }} />
+  ),
 };
 
 export const ToastContainer: React.FC<ToastContainerProps> = ({
@@ -37,7 +39,7 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
   }, [config]);
 
   const handleHide = useCallback(() => {
-    setToastData((prev) => {
+    setToastData(prev => {
       if (prev) {
         prev.onHide?.();
       }
@@ -69,7 +71,7 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
   const rendererProps: ToastConfigParams = {
     ...toastData,
     isVisible: true,
-    show: (params) => toastManager.show(params),
+    show: params => toastManager.show(params),
     hide: toastManager.hide,
     position: toastData.position || 'top',
     type: type,

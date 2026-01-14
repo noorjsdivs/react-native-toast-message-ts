@@ -38,7 +38,7 @@ export const Toast: React.FC<ToastProps> = ({
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponder: (_, gestureState) => {
-           return Math.abs(gestureState.dy) > 5;
+          return Math.abs(gestureState.dy) > 5;
         },
         onPanResponderMove: (_, gestureState) => {
           if (position === 'top' && gestureState.dy < 0) {
@@ -59,12 +59,12 @@ export const Toast: React.FC<ToastProps> = ({
             Animated.spring(translateY, {
               toValue: 0,
               useNativeDriver: true,
-              bounciness: 0
+              bounciness: 0,
             }).start();
           }
         },
       }),
-    [hide, position, translateY]
+    [hide, position, translateY],
   );
 
   const animateShow = () => {

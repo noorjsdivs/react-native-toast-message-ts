@@ -82,12 +82,7 @@ describe('Toast', () => {
     };
 
     const { UNSAFE_root } = render(
-      <Toast
-        config={config}
-        onHide={mockOnHide}
-        topOffset={50}
-        renderer={mockRenderer}
-      />,
+      <Toast config={config} onHide={mockOnHide} topOffset={50} renderer={mockRenderer} />,
     );
     expect(UNSAFE_root).toBeTruthy();
   });
@@ -99,12 +94,7 @@ describe('Toast', () => {
     };
 
     const { UNSAFE_root } = render(
-      <Toast
-        config={config}
-        onHide={mockOnHide}
-        bottomOffset={50}
-        renderer={mockRenderer}
-      />,
+      <Toast config={config} onHide={mockOnHide} bottomOffset={50} renderer={mockRenderer} />,
     );
     expect(UNSAFE_root).toBeTruthy();
   });

@@ -4,6 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![React Native](https://img.shields.io/badge/React%20Native-0.83-green.svg)](https://reactnative.dev/)
+[![Support](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support-orange.svg)](https://buymeacoffee.com/reactbd)
 
 A modern, highly customizable toast notification library for React Native with full TypeScript support. Inspired by popular toast libraries like Sonner and react-native-toast-message, this library provides an elegant and flexible way to display notifications in your React Native applications.
 
@@ -20,6 +21,15 @@ A modern, highly customizable toast notification library for React Native with f
 - 📦 **Easy to Use** - Simple API similar to popular web toast libraries
 - 🔧 **Highly Configurable** - Global and per-toast configuration options
 - 🆕 **Latest React Native** - Compatible with React 19.2 and React Native 0.83
+- 🏗️ **Expo Compatible** - Works with Expo Go and prebuilds out of the box
+
+## 📱 Expo Support
+
+This library is fully compatible with Expo. It uses standard React Native APIs (`Animated`, `PanResponder`) and requires no native code linking. You can use it directly in:
+
+- **Expo Go**
+- **Expo Development Builds**
+- **Expo Prebuilds**
 
 ## 📋 Requirements
 
@@ -98,11 +108,11 @@ Toast.show({
 
 ### ToastContainer Props
 
-| Prop           | Type                                 | Default     | Description                                               |
-| -------------- | ------------------------------------ | ----------- | --------------------------------------------------------- |
-| `config`       | `ToastConfig`                        | `undefined` | Map of toast types to render functions                    |
-| `topOffset`    | `number`                             | `40`        | Top offset for positioning (when position is 'top')       |
-| `bottomOffset` | `number`                             | `40`        | Bottom offset for positioning (when position is 'bottom') |
+| Prop           | Type          | Default     | Description                                               |
+| -------------- | ------------- | ----------- | --------------------------------------------------------- |
+| `config`       | `ToastConfig` | `undefined` | Map of toast types to render functions                    |
+| `topOffset`    | `number`      | `40`        | Top offset for positioning (when position is 'top')       |
+| `bottomOffset` | `number`      | `40`        | Bottom offset for positioning (when position is 'bottom') |
 
 ### Toast Methods
 
@@ -187,7 +197,54 @@ Toast.hide();
 | `swipeable`         | `boolean`                                                 | `true`      | Enable swipe to dismiss                     |
 | `props`             | `Record<string, any>`                                     | `undefined` | Custom props for advanced use cases         |
 
-## 🎨 Customization Examples
+## 🎨 Advanced Customization (Sonner-style)
+
+Inspired by libraries like [Sonner](https://sonner.emilkowal.ski/), this library gives you complete control over the toast's rendering, allowing you to build any design you want.
+
+### 1. Global Configuration
+
+Define your custom types once in `ToastContainer` and use them everywhere.
+
+```tsx
+// types.ts
+import { ToastConfigParams } from 'react-native-toast-message-ts';
+
+// Your custom toast component
+const TomatoToast = ({ text1, props }: ToastConfigParams<any>) => (
+  <View
+    style={{
+      height: 60,
+      width: '90%',
+      backgroundColor: 'tomato',
+      borderRadius: 10,
+      padding: 15,
+      justifyContent: 'center',
+    }}
+  >
+    <Text style={{ color: 'white', fontWeight: 'bold' }}>{text1}</Text>
+    <Text style={{ color: 'white' }}>{props.uuid}</Text>
+  </View>
+);
+
+// App.tsx
+const toastConfig = {
+  tomato: TomatoToast,
+  // Overwrite default types
+  success: props => <BaseToast {...props} text1Style={{ fontSize: 20 }} />,
+};
+```
+
+### 2. Usage
+
+```tsx
+Toast.show({
+  type: 'tomato',
+  text1: 'Hello World',
+  props: { uuid: 'b432-89ac' }, // Pass arbitrary props
+});
+```
+
+## 💡 Examples
 
 ### Custom Colors
 
@@ -249,7 +306,6 @@ Toast.success('New Message', 'Tap to view', {
 
 To customize the default appearance globally, you can provide custom renderers in the `config` prop of `ToastContainer` as shown above.
 
-
 ### Custom Toast Renderer
 
 For complete control over toast appearance:
@@ -273,7 +329,9 @@ const toastConfig = {
     </View>
   ),
   // You can overwrite default types too
-  success: (props: ToastConfigParams) => <BaseToast {...props} style={{ borderLeftColor: 'pink' }} />
+  success: (props: ToastConfigParams) => (
+    <BaseToast {...props} style={{ borderLeftColor: 'pink' }} />
+  ),
 };
 
 <ToastContainer config={toastConfig} />;
@@ -414,12 +472,18 @@ Inspired by:
 ## 📞 Support
 
 If you have any questions or need help, please:
-- Open an issue on [GitHub](https://github.com/noor-mohammad/react-native-toast-message-ts/issues)
+- Open an issue on [GitHub](https://github.com/noorjsdivs/react-native-toast-message-ts/issues)
 - Check the [examples](./example) directory for more usage examples
 
 ## 🎉 Show Your Support
 
 If this library helped you, please give it a ⭐️ on GitHub!
+
+You can also support the development of this project by buying me a coffee:
+
+<a href="https://buymeacoffee.com/reactbd" target="_blank">
+  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" >
+</a>
 
 ---
 

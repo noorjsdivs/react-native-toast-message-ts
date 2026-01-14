@@ -5,7 +5,7 @@ import { BaseToastProps } from '../types';
 import { COLORS } from '../colors';
 import { ToastIcon } from '../ToastIcon';
 
-export const SuccessToast: React.FC<BaseToastProps> = (props) => {
+export const SuccessToast: React.FC<BaseToastProps> = props => {
   return (
     <BaseToast
       {...props}
