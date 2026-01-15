@@ -5,13 +5,14 @@ import { BaseToastProps } from '../types';
 import { COLORS } from '../colors';
 import { ToastIcon } from '../ToastIcon';
 
-export const ErrorToast: React.FC<BaseToastProps> = props => {
+export const ErrorToast: React.FC<BaseToastProps & { hide?: () => void }> = props => {
   return (
     <BaseToast
       {...props}
       style={[styles.error, props.style]}
       text1Style={[styles.text1, props.text1Style]}
       renderLeadingIcon={() => <ToastIcon type="error" />}
+      onClose={(props as any).hide}
     />
   );
 };

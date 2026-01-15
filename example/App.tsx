@@ -20,7 +20,7 @@ export default function App() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Basic Toasts</Text>
-          
+
           <TouchableOpacity
             style={[styles.button, styles.successButton]}
             onPress={() => Toast.success('Success!', 'Operation completed successfully')}
@@ -52,7 +52,7 @@ export default function App() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Positions</Text>
-          
+
           <TouchableOpacity
             style={[styles.button, styles.primaryButton]}
             onPress={() =>
@@ -78,12 +78,12 @@ export default function App() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Durations</Text>
-          
+
           <TouchableOpacity
             style={[styles.button, styles.primaryButton]}
             onPress={() =>
               Toast.info('Quick Toast', 'This disappears in 2 seconds', {
-                duration: 2000,
+                visibilityTime: 2000,
               })
             }
           >
@@ -94,7 +94,7 @@ export default function App() {
             style={[styles.button, styles.primaryButton]}
             onPress={() =>
               Toast.info('Long Toast', 'This stays for 10 seconds', {
-                duration: 10000,
+                visibilityTime: 10000,
               })
             }
           >
@@ -104,8 +104,8 @@ export default function App() {
           <TouchableOpacity
             style={[styles.button, styles.primaryButton]}
             onPress={() =>
-              Toast.info('Persistent Toast', 'Tap "Hide" to dismiss this', {
-                duration: 0,
+              Toast.info('Persistent Toast', 'Tap "Hide" or the X button to dismiss', {
+                autoHide: false,
               })
             }
           >
@@ -122,7 +122,7 @@ export default function App() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Custom Styling</Text>
-          
+
           <TouchableOpacity
             style={[styles.button, styles.primaryButton]}
             onPress={() =>
@@ -157,7 +157,7 @@ export default function App() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Interactive</Text>
-          
+
           <TouchableOpacity
             style={[styles.button, styles.primaryButton]}
             onPress={() =>
@@ -183,7 +183,7 @@ export default function App() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Advanced</Text>
-          
+
           <TouchableOpacity
             style={[styles.button, styles.primaryButton]}
             onPress={() =>
@@ -221,10 +221,7 @@ export default function App() {
         </View>
       </ScrollView>
 
-      <ToastContainer
-        topOffset={50}
-        bottomOffset={50}
-      />
+      <ToastContainer topOffset={50} bottomOffset={50} />
     </SafeAreaView>
   );
 }

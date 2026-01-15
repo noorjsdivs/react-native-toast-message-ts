@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/react-native-toast-message-ts.svg)](https://www.npmjs.com/package/react-native-toast-message-ts)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
-[![React Native](https://img.shields.io/badge/React%20Native-0.83-green.svg)](https://reactnative.dev/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.70+-green.svg)](https://reactnative.dev/)
 [![Support](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support-orange.svg)](https://buymeacoffee.com/reactbd)
 
 A modern, highly customizable toast notification library for React Native with full TypeScript support. Inspired by popular toast libraries like Sonner and react-native-toast-message, this library provides an elegant and flexible way to display notifications in your React Native applications.
@@ -13,14 +13,15 @@ A modern, highly customizable toast notification library for React Native with f
 - 🎨 **Fully Customizable** - Customize colors, positions, icons, durations, and more
 - 📱 **Cross-Platform** - Works seamlessly on iOS and Android
 - 🎭 **Multiple Variants** - Success, error, warning, info, and custom toasts
-- ⚡ **Smooth Animations** - Beautiful slide-in/out animations with native driver
+- ⚡ **Smooth Animations** - Beautiful slide-in/out animations (300ms) with native driver
 - 👆 **Swipeable** - Swipe to dismiss functionality
+- ✕ **Close Button** - Built-in close button on every toast
+- 📚 **Multi-Toast Queue** - Display multiple toasts simultaneously with stacking
 - 🎯 **TypeScript First** - Full TypeScript support with comprehensive type definitions
 - 🪶 **Lightweight** - Zero dependencies, minimal footprint
-- 🧪 **Well Tested** - Comprehensive test coverage
+- 🧪 **Well Tested** - Comprehensive test coverage (58+ tests)
 - 📦 **Easy to Use** - Simple API similar to popular web toast libraries
 - 🔧 **Highly Configurable** - Global and per-toast configuration options
-- 🆕 **Latest React Native** - Compatible with React 19.2 and React Native 0.83
 - 🏗️ **Expo Compatible** - Works with Expo Go and prebuilds out of the box
 
 ## 📱 Expo Support
@@ -61,17 +62,17 @@ pnpm add react-native-toast-message-ts
 
 ```tsx
 import React from 'react';
-import { View } from 'react-native';
+import { SafeAreaView } from 'react-native';
 import { ToastContainer } from 'react-native-toast-message-ts';
 
 export default function App() {
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1 }}>
       {/* Your app content */}
 
       {/* Toast Container should be at the root level */}
       <ToastContainer />
-    </View>
+    </SafeAreaView>
   );
 }
 ```
@@ -99,7 +100,7 @@ Toast.show({
   text1: 'Custom Toast',
   text2: 'This is a custom configured toast',
   position: 'bottom',
-  duration: 5000,
+  visibilityTime: 5000,
   onPress: () => console.log('Toast pressed!'),
 });
 ```
@@ -108,11 +109,12 @@ Toast.show({
 
 ### ToastContainer Props
 
-| Prop           | Type          | Default     | Description                                               |
-| -------------- | ------------- | ----------- | --------------------------------------------------------- |
-| `config`       | `ToastConfig` | `undefined` | Map of toast types to render functions                    |
-| `topOffset`    | `number`      | `40`        | Top offset for positioning (when position is 'top')       |
-| `bottomOffset` | `number`      | `40`        | Bottom offset for positioning (when position is 'bottom') |
+| Prop             | Type          | Default     | Description                                               |
+| ---------------- | ------------- | ----------- | --------------------------------------------------------- |
+| `config`         | `ToastConfig` | `undefined` | Map of toast types to render functions                    |
+| `topOffset`      | `number`      | `40`        | Top offset for positioning (when position is 'top')       |
+| `bottomOffset`   | `number`      | `40`        | Bottom offset for positioning (when position is 'bottom') |
+| `visibilityTime` | `number`      | `3000`      | Default visibility time in milliseconds                   |
 
 ### Toast Methods
 
@@ -126,8 +128,7 @@ Toast.show({
   text1: 'Success!',
   text2: 'Operation completed',
   position: 'top',
-  duration: 4000,
-  backgroundColor: '#00ff00',
+  visibilityTime: 4000,
   onPress: () => console.log('Pressed'),
 });
 ```
@@ -138,7 +139,7 @@ Show a success toast.
 
 ```tsx
 Toast.success('Success!', 'Your changes have been saved', {
-  duration: 3000,
+  visibilityTime: 3000,
   position: 'bottom',
 });
 ```
@@ -169,7 +170,7 @@ Toast.info('Info', 'New features available');
 
 #### `Toast.hide()`
 
-Hide the currently visible toast.
+Hide the oldest visible toast in the queue.
 
 ```tsx
 Toast.hide();
@@ -177,40 +178,50 @@ Toast.hide();
 
 ### ToastShowParams / ToastOptions
 
-| Prop                | Type                                                      | Default     | Description                                 |
-| ------------------- | --------------------------------------------------------- | ----------- | ------------------------------------------- |
-| `type`              | `'success' \| 'error' \| 'warning' \| 'info' \| 'custom'` | `'info'`    | Type of the toast                           |
-| `text1`             | `string`                                                  | `undefined` | Main text (title)                           |
-| `text2`             | `string`                                                  | `undefined` | Secondary text (subtitle)                   |
-| `position`          | `'top' \| 'bottom'`                                       | `'top'`     | Position of the toast                       |
-| `duration`          | `number`                                                  | `4000`      | Duration in milliseconds (0 for persistent) |
-| `onPress`           | `() => void`                                              | `undefined` | Callback when toast is pressed              |
-| `onShow`            | `() => void`                                              | `undefined` | Callback when toast is shown                |
-| `onHide`            | `() => void`                                              | `undefined` | Callback when toast is hidden               |
-| `icon`              | `ReactNode`                                               | `undefined` | Custom icon component                       |
-| `style`             | `ViewStyle`                                               | `undefined` | Custom container style                      |
-| `text1Style`        | `TextStyle`                                               | `undefined` | Custom style for text1                      |
-| `text2Style`        | `TextStyle`                                               | `undefined` | Custom style for text2                      |
-| `backgroundColor`   | `string`                                                  | `'#FFFFFF'` | Background color                            |
-| `borderLeftColor`   | `string`                                                  | Type-based  | Border left color                           |
-| `animationDuration` | `number`                                                  | `300`       | Animation duration in milliseconds          |
-| `swipeable`         | `boolean`                                                 | `true`      | Enable swipe to dismiss                     |
-| `props`             | `Record<string, any>`                                     | `undefined` | Custom props for advanced use cases         |
+| Prop             | Type                                                      | Default     | Description                                     |
+| ---------------- | --------------------------------------------------------- | ----------- | ----------------------------------------------- |
+| `type`           | `'success' \| 'error' \| 'warning' \| 'info' \| 'custom'` | `'success'` | Type of the toast                               |
+| `text1`          | `string`                                                  | `undefined` | Main text (title)                               |
+| `text2`          | `string`                                                  | `undefined` | Secondary text (subtitle)                       |
+| `position`       | `'top' \| 'bottom'`                                       | `'top'`     | Position of the toast                           |
+| `visibilityTime` | `number`                                                  | `3000`      | Duration in milliseconds                        |
+| `autoHide`       | `boolean`                                                 | `true`      | Whether toast auto-hides (false for persistent) |
+| `topOffset`      | `number`                                                  | `40`        | Top offset when position is 'top'               |
+| `bottomOffset`   | `number`                                                  | `40`        | Bottom offset when position is 'bottom'         |
+| `onPress`        | `() => void`                                              | `undefined` | Callback when toast is pressed                  |
+| `onShow`         | `() => void`                                              | `undefined` | Callback when toast is shown                    |
+| `onHide`         | `() => void`                                              | `undefined` | Callback when toast is hidden                   |
+| `props`          | `Record<string, any>`                                     | `undefined` | Custom props for advanced use cases             |
 
-## 🎨 Advanced Customization (Sonner-style)
+## 🆕 Multi-Toast Queue
 
-Inspired by libraries like [Sonner](https://sonner.emilkowal.ski/), this library gives you complete control over the toast's rendering, allowing you to build any design you want.
+This library supports displaying multiple toasts simultaneously. When you trigger multiple toasts, they stack vertically with a 75px spacing:
+
+```tsx
+// Show multiple toasts - they will stack!
+Toast.success('First Toast', 'This is the first message');
+Toast.info('Second Toast', 'This is the second message');
+Toast.warning('Third Toast', 'This is the third message');
+```
+
+Each toast has its own close button (✕) and auto-hide timer. Users can dismiss individual toasts by:
+
+- Tapping the close button (✕)
+- Swiping up (for top position) or down (for bottom position)
+- Waiting for auto-hide (default 3 seconds)
+
+## 🎨 Advanced Customization
 
 ### 1. Global Configuration
 
 Define your custom types once in `ToastContainer` and use them everywhere.
 
 ```tsx
-// types.ts
-import { ToastConfigParams } from 'react-native-toast-message-ts';
+import { View, Text } from 'react-native';
+import { ToastContainer, ToastConfigParams, BaseToast } from 'react-native-toast-message-ts';
 
-// Your custom toast component
-const TomatoToast = ({ text1, props }: ToastConfigParams<any>) => (
+// Custom toast component
+const CustomToast = ({ text1, text2, hide }: ToastConfigParams) => (
   <View
     style={{
       height: 60,
@@ -219,62 +230,49 @@ const TomatoToast = ({ text1, props }: ToastConfigParams<any>) => (
       borderRadius: 10,
       padding: 15,
       justifyContent: 'center',
+      alignSelf: 'center',
     }}
   >
     <Text style={{ color: 'white', fontWeight: 'bold' }}>{text1}</Text>
-    <Text style={{ color: 'white' }}>{props.uuid}</Text>
+    {text2 && <Text style={{ color: 'white' }}>{text2}</Text>}
   </View>
 );
 
-// App.tsx
 const toastConfig = {
-  tomato: TomatoToast,
-  // Overwrite default types
-  success: props => <BaseToast {...props} text1Style={{ fontSize: 20 }} />,
+  custom: CustomToast,
+  // Override default types
+  success: (props: ToastConfigParams) => (
+    <BaseToast {...props} style={{ borderLeftColor: 'pink' }} onClose={props.hide} />
+  ),
 };
+
+// In your App
+<ToastContainer config={toastConfig} visibilityTime={5000} />;
 ```
 
 ### 2. Usage
 
 ```tsx
 Toast.show({
-  type: 'tomato',
+  type: 'custom',
   text1: 'Hello World',
-  props: { uuid: 'b432-89ac' }, // Pass arbitrary props
+  text2: 'Custom toast message',
 });
 ```
 
 ## 💡 Examples
 
-### Custom Colors
+### Custom Duration
 
 ```tsx
-Toast.success('Success!', 'Custom colors', {
-  backgroundColor: '#1a1a1a',
-  borderLeftColor: '#00ff00',
-  text1Style: { color: '#ffffff' },
-  text2Style: { color: '#cccccc' },
+// Quick toast (2 seconds)
+Toast.info('Quick Toast', 'This disappears fast', {
+  visibilityTime: 2000,
 });
-```
 
-### Custom Icons
-
-```tsx
-import { Image } from 'react-native';
-
-Toast.show({
-  type: 'custom',
-  text1: 'Custom Icon',
-  icon: <Image source={require('./icon.png')} style={{ width: 24, height: 24 }} />,
-});
-```
-
-### Bottom Position with Long Duration
-
-```tsx
-Toast.info('Info', 'This toast stays longer', {
-  position: 'bottom',
-  duration: 10000, // 10 seconds
+// Long toast (10 seconds)
+Toast.info('Long Toast', 'This stays longer', {
+  visibilityTime: 10000,
 });
 ```
 
@@ -282,13 +280,22 @@ Toast.info('Info', 'This toast stays longer', {
 
 ```tsx
 Toast.show({
+  type: 'info',
   text1: 'Persistent Toast',
-  text2: 'This will not auto-hide',
-  duration: 0, // 0 means it won't auto-hide
+  text2: 'Tap the X button or swipe to dismiss',
+  autoHide: false, // Won't auto-hide
 });
 
-// Hide it manually when needed
+// Or hide programmatically
 Toast.hide();
+```
+
+### Bottom Position
+
+```tsx
+Toast.success('Bottom Toast', 'Appears at the bottom', {
+  position: 'bottom',
+});
 ```
 
 ### With Press Handler
@@ -298,48 +305,26 @@ Toast.success('New Message', 'Tap to view', {
   onPress: () => {
     console.log('Toast pressed!');
     // Navigate to message screen
+    navigation.navigate('Messages');
   },
 });
 ```
 
-### Global Customization
-
-To customize the default appearance globally, you can provide custom renderers in the `config` prop of `ToastContainer` as shown above.
-
-### Custom Toast Renderer
-
-For complete control over toast appearance:
+### With Callbacks
 
 ```tsx
-import { View, Text } from 'react-native';
-import { ToastContainer, ToastConfigParams } from 'react-native-toast-message-ts';
-
-const toastConfig = {
-  custom: ({ text1, text2 }: ToastConfigParams) => (
-    <View
-      style={{
-        backgroundColor: '#000',
-        padding: 20,
-        borderRadius: 10,
-        margin: 20,
-      }}
-    >
-      <Text style={{ color: '#fff', fontSize: 18 }}>{text1}</Text>
-      {text2 && <Text style={{ color: '#ccc', fontSize: 14 }}>{text2}</Text>}
-    </View>
-  ),
-  // You can overwrite default types too
-  success: (props: ToastConfigParams) => (
-    <BaseToast {...props} style={{ borderLeftColor: 'pink' }} />
-  ),
-};
-
-<ToastContainer config={toastConfig} />;
+Toast.show({
+  type: 'success',
+  text1: 'Processing',
+  text2: 'Your request is being processed',
+  onShow: () => console.log('Toast shown'),
+  onHide: () => console.log('Toast hidden'),
+});
 ```
 
 ## 🎭 Toast Types
 
-The library comes with 4 pre-styled toast types:
+The library comes with 5 pre-styled toast types:
 
 ### Success
 
@@ -373,15 +358,15 @@ Blue border with info icon - for informational messages
 Toast.info('Info', 'Here is some helpful information');
 ```
 
-### Custom
+### Base / Custom
 
 Create your own toast with full customization
 
 ```tsx
 Toast.show({
-  type: 'custom',
-  text1: 'Custom Toast',
-  // Full customization options
+  type: 'base',
+  text1: 'Base Toast',
+  text2: 'Minimal styling',
 });
 ```
 
@@ -397,9 +382,11 @@ import {
   ToastContainer,
   ToastConfig,
   ToastShowParams,
-  ToastOptions,
+  ToastConfigParams,
   ToastType,
   ToastPosition,
+  BaseToast,
+  BaseToastProps,
 } from 'react-native-toast-message-ts';
 ```
 
@@ -408,9 +395,14 @@ import {
 You can use the built-in icon components separately:
 
 ```tsx
-import { SuccessIcon, ErrorIcon, WarningIcon, InfoIcon } from 'react-native-toast-message-ts';
+import { SuccessIcon, ErrorIcon, WarningIcon, InfoIcon, ToastIcon } from 'react-native-toast-message-ts';
 
-<SuccessIcon color="#00ff00" size={30} />;
+// Individual icons
+<SuccessIcon color="#00ff00" size={30} />
+<ErrorIcon color="#ff0000" size={24} />
+
+// Or use ToastIcon with type
+<ToastIcon type="success" size={24} />
 ```
 
 ### Colors Export
@@ -426,9 +418,30 @@ console.log(COLORS.warning); // '#ffc107'
 console.log(COLORS.info); // '#17a2b8'
 ```
 
+### BaseToast Props
+
+When creating custom toast components, you can use these props:
+
+| Prop                    | Type              | Default | Description             |
+| ----------------------- | ----------------- | ------- | ----------------------- |
+| `text1`                 | `string`          | -       | Main title text         |
+| `text2`                 | `string`          | -       | Subtitle text           |
+| `onPress`               | `() => void`      | -       | Press handler           |
+| `onClose`               | `() => void`      | -       | Close button handler    |
+| `hideCloseButton`       | `boolean`         | `false` | Hide the X close button |
+| `style`                 | `ViewStyle`       | -       | Container style         |
+| `text1Style`            | `TextStyle`       | -       | Title text style        |
+| `text2Style`            | `TextStyle`       | -       | Subtitle text style     |
+| `text1NumberOfLines`    | `number`          | `1`     | Max lines for title     |
+| `text2NumberOfLines`    | `number`          | `1`     | Max lines for subtitle  |
+| `renderLeadingIcon`     | `() => ReactNode` | -       | Custom leading icon     |
+| `renderTrailingIcon`    | `() => ReactNode` | -       | Custom trailing icon    |
+| `contentContainerStyle` | `ViewStyle`       | -       | Content container style |
+| `activeOpacity`         | `number`          | `0.8`   | Touch opacity           |
+
 ## 🧪 Testing
 
-The library includes comprehensive tests. To run tests:
+The library includes comprehensive tests (58+ test cases). To run tests:
 
 ```bash
 npm test
@@ -436,18 +449,17 @@ npm test
 
 To run tests with coverage:
 
-```bash70.0
+```bash
+npm test -- --coverage
+```
+
+## 📱 Compatibility
+
+- React Native >= 0.70.0
 - React >= 18.0.0
 - iOS 13.0+
 - Android API 23+
-- Node >= 18.0.0
-- pnpm >= 9.0.0 (recommended)
-## 📱 Compatibility
-
-- React Native >= 0.64.0
-- React >= 16.8.0
-- iOS 11.0+
-- Android API 21+
+- Expo SDK 49+
 
 ## 🤝 Contributing
 
@@ -466,12 +478,14 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 ## 🙏 Acknowledgments
 
 Inspired by:
+
 - [react-native-toast-message](https://www.npmjs.com/package/react-native-toast-message)
 - [Sonner](https://sonner.emilkowal.ski/) - for web
 
 ## 📞 Support
 
 If you have any questions or need help, please:
+
 - Open an issue on [GitHub](https://github.com/noorjsdivs/react-native-toast-message-ts/issues)
 - Check the [examples](./example) directory for more usage examples
 
@@ -488,4 +502,3 @@ You can also support the development of this project by buying me a coffee:
 ---
 
 Made with ❤️ by Noor Mohammad
-```

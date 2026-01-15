@@ -1,7 +1,7 @@
 {
   "name": "react-native-toast-message-ts",
-  "version": "1.0.0",
-  "description": "Toast message component for React Native",
+  "version": "1.0.1",
+  "description": "A modern, customizable toast notification library for React Native & Expo with TypeScript support, multi-toast queue, swipe-to-dismiss, and smooth animations",
   "main": "./lib/index.js",
   "module": "./lib/index.esm.js",
   "types": "./lib/index.d.ts",
@@ -23,7 +23,19 @@
   "packageManager": "pnpm@9.15.3",
   "keywords": [
     "react-native",
-    "toast"
+    "toast",
+    "toast-message",
+    "notification",
+    "alert",
+    "snackbar",
+    "popup",
+    "expo",
+    "typescript",
+    "react-native-toast",
+    "toast-notification",
+    "mobile",
+    "ios",
+    "android"
   ],
   "scripts": {
     "prepare": "husky",
