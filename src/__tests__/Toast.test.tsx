@@ -11,7 +11,7 @@ import { Text } from 'react-native';
 
 describe('Toast', () => {
   const mockOnHide = jest.fn();
-  const mockRenderer = ({ text1, text2 }: any) => (
+  const mockRenderer = ({ text1, text2 }: { text1?: string; text2?: string }) => (
     <>
       <Text>{text1}</Text>
       {text2 && <Text>{text2}</Text>}

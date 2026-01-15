@@ -2,6 +2,7 @@ import {
   getDefaultBackgroundColor,
   getDefaultBorderColor,
   getDefaultIconColor,
+  getDefaultTextColor,
   COLORS,
 } from '../colors';
 
@@ -14,16 +15,33 @@ describe('colors', () => {
       expect(COLORS.info).toBe('#17a2b8');
       expect(COLORS.white).toBe('#FFFFFF');
       expect(COLORS.black).toBe('#000000');
+      expect(COLORS.warningText).toBe('#664d03');
     });
   });
 
   describe('getDefaultBackgroundColor', () => {
-    it('should return white for all types', () => {
-      expect(getDefaultBackgroundColor('success')).toBe(COLORS.white);
-      expect(getDefaultBackgroundColor('error')).toBe(COLORS.white);
-      expect(getDefaultBackgroundColor('warning')).toBe(COLORS.white);
-      expect(getDefaultBackgroundColor('info')).toBe(COLORS.white);
+    it('should return correct background color for each type', () => {
+      expect(getDefaultBackgroundColor('success')).toBe(COLORS.success);
+      expect(getDefaultBackgroundColor('error')).toBe(COLORS.error);
+      expect(getDefaultBackgroundColor('warning')).toBe(COLORS.warning);
+      expect(getDefaultBackgroundColor('info')).toBe(COLORS.info);
       expect(getDefaultBackgroundColor('custom')).toBe(COLORS.white);
+    });
+  });
+
+  describe('getDefaultTextColor', () => {
+    it('should return white for success, error, info', () => {
+      expect(getDefaultTextColor('success')).toBe(COLORS.white);
+      expect(getDefaultTextColor('error')).toBe(COLORS.white);
+      expect(getDefaultTextColor('info')).toBe(COLORS.white);
+    });
+
+    it('should return dark text for warning', () => {
+      expect(getDefaultTextColor('warning')).toBe(COLORS.warningText);
+    });
+
+    it('should return default text for custom type', () => {
+      expect(getDefaultTextColor('custom')).toBe(COLORS.text);
     });
   });
 

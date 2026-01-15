@@ -5,6 +5,19 @@ export type ToastType = 'success' | 'error' | 'warning' | 'info' | string;
 
 export type ToastPosition = 'top' | 'bottom';
 
+export interface ToastIconConfig {
+  /** Hide the leading icon (checkmark, X, etc.) */
+  hideLeadingIcon?: boolean;
+  /** Hide the close (X) button */
+  hideCloseIcon?: boolean;
+  /** Custom leading icon size */
+  leadingIconSize?: number;
+  /** Custom leading icon color */
+  leadingIconColor?: string;
+  /** Custom close icon color */
+  closeIconColor?: string;
+}
+
 export interface BaseToastProps {
   text1?: string;
   text2?: string;
@@ -20,14 +33,18 @@ export interface BaseToastProps {
   renderTrailingIcon?: () => ReactNode;
   testID?: string;
   accessibilityLabel?: string;
+  /** Icon configuration options */
+  iconConfig?: ToastIconConfig;
+  /** Background color for the toast */
+  backgroundColor?: string;
 }
 
 export interface ToastProps extends BaseToastProps {
   type?: ToastType;
-  props?: Record<string, any>;
+  props?: Record<string, unknown>;
 }
 
-export interface ToastConfigParams<Props = any> {
+export interface ToastConfigParams<Props = Record<string, unknown>> {
   position: ToastPosition;
   type: ToastType;
   isVisible: boolean;
@@ -37,6 +54,12 @@ export interface ToastConfigParams<Props = any> {
   hide: () => void;
   onPress?: () => void;
   props: Props;
+  /** Icon configuration options */
+  iconConfig?: ToastIconConfig;
+  /** Index in the toast stack (0 = front/newest) */
+  stackIndex?: number;
+  /** Total number of toasts in the stack */
+  stackSize?: number;
 }
 
 export type ToastConfig = {
@@ -52,14 +75,18 @@ export interface ToastShowParams {
   autoHide?: boolean;
   topOffset?: number;
   bottomOffset?: number;
-  props?: Record<string, any>;
+  props?: Record<string, unknown>;
   onShow?: () => void;
   onHide?: () => void;
   onPress?: () => void;
+  /** Icon configuration options */
+  iconConfig?: ToastIconConfig;
 }
 
 export interface ToastData extends ToastShowParams {
   isVisible: boolean;
+  /** Icon configuration options */
+  iconConfig?: ToastIconConfig;
 }
 
 export interface ToastHideParams {

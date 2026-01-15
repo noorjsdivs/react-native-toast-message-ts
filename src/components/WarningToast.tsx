@@ -5,18 +5,18 @@ import { BaseToastProps, ToastIconConfig } from '../types';
 import { COLORS } from '../colors';
 import { ToastIcon } from '../ToastIcon';
 
-interface ErrorToastProps extends BaseToastProps {
+interface WarningToastProps extends BaseToastProps {
   hide?: () => void;
   iconConfig?: ToastIconConfig;
 }
 
-export const ErrorToast: React.FC<ErrorToastProps> = props => {
+export const WarningToast: React.FC<WarningToastProps> = props => {
   const { iconConfig } = props;
 
   return (
     <BaseToast
       {...props}
-      style={[styles.error, props.style]}
+      style={[styles.warning, props.style]}
       text1Style={[styles.text1, props.text1Style]}
       text2Style={[styles.text2, props.text2Style]}
       renderLeadingIcon={
@@ -24,8 +24,8 @@ export const ErrorToast: React.FC<ErrorToastProps> = props => {
           ? undefined
           : () => (
               <ToastIcon
-                type="error"
-                color={iconConfig?.leadingIconColor || COLORS.white}
+                type="warning"
+                color={iconConfig?.leadingIconColor || COLORS.warningText}
                 size={iconConfig?.leadingIconSize || 24}
               />
             )
@@ -33,25 +33,25 @@ export const ErrorToast: React.FC<ErrorToastProps> = props => {
       onClose={props.hide}
       iconConfig={{
         ...iconConfig,
-        closeIconColor: iconConfig?.closeIconColor || COLORS.white,
+        closeIconColor: iconConfig?.closeIconColor || COLORS.warningText,
       }}
     />
   );
 };
 
 const styles = StyleSheet.create({
-  error: {
-    backgroundColor: COLORS.error,
+  warning: {
+    backgroundColor: COLORS.warning,
     borderRadius: 8,
   },
   text1: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: COLORS.white,
+    color: COLORS.warningText,
   },
   text2: {
     fontSize: 13,
-    color: COLORS.white,
-    opacity: 0.9,
+    color: COLORS.warningText,
+    opacity: 0.85,
   },
 });

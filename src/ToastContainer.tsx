@@ -6,33 +6,29 @@ import { ToastConfig, ToastConfigParams, ToastData } from './types';
 import { SuccessToast } from './components/SuccessToast';
 import { ErrorToast } from './components/ErrorToast';
 import { InfoToast } from './components/InfoToast';
+import { WarningToast } from './components/WarningToast';
 import { BaseToast } from './components/BaseToast';
-import { WarningIcon } from './ToastIcon';
 
 export interface ToastContainerProps {
   config?: ToastConfig;
   topOffset?: number;
   bottomOffset?: number;
   visibilityTime?: number;
+  /** Maximum number of toasts visible in stack */
+  maxVisibleToasts?: number;
 }
 
 const defaultComponents: ToastConfig = {
   success: (props: ToastConfigParams) => <SuccessToast {...props} />,
   error: (props: ToastConfigParams) => <ErrorToast {...props} />,
   info: (props: ToastConfigParams) => <InfoToast {...props} />,
+  warning: (props: ToastConfigParams) => <WarningToast {...props} />,
   base: (props: ToastConfigParams) => <BaseToast {...props} onClose={props.hide} />,
-  warning: (props: ToastConfigParams) => (
-    <BaseToast
-      {...props}
-      style={{ borderLeftColor: '#ffc107', borderLeftWidth: 5 }}
-      renderLeadingIcon={() => <WarningIcon />}
-      onClose={props.hide}
-    />
-  ),
 };
 
 export interface ToastItem extends ToastData {
   id: string;
+  createdAt: number;
 }
 
 export const ToastContainer: React.FC<ToastContainerProps> = ({
@@ -61,12 +57,13 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
   }, []);
 
   const handleHide = useCallback(() => {
-    // Hide the first/oldest toast in queue
+    // Hide the newest (front) toast - it's at the end of the array
     setToastQueue(prev => {
       if (prev.length === 0) return prev;
-      const [current, ...rest] = prev;
-      current?.onHide?.();
-      return rest;
+      const newQueue = [...prev];
+      const removed = newQueue.pop(); // Remove newest (front) toast
+      removed?.onHide?.();
+      return newQueue;
     });
   }, []);
 
@@ -76,7 +73,9 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
         ...data,
         id: `toast_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
         visibilityTime: data.visibilityTime ?? defaultVisibilityTime,
+        createdAt: Date.now(),
       };
+      // Add new toast to the end (newest = front)
       setToastQueue(prev => [...prev, toastItem]);
     },
     [defaultVisibilityTime],
@@ -96,9 +95,13 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
     return null;
   }
 
+  // Reverse for rendering: newest (last added) should be at front (index 0 in display)
+  const reversedQueue = [...toastQueue].reverse();
+  const stackSize = reversedQueue.length;
+
   return (
     <View style={styles.container} pointerEvents="box-none">
-      {toastQueue.map((toastData, index) => {
+      {reversedQueue.map((toastData, displayIndex) => {
         const { type = 'success' } = toastData;
         const Renderer = mergedConfig[type] || mergedConfig.info;
         const toastId = toastData.id;
@@ -114,20 +117,20 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
           position: toastData.position || 'top',
           type: type,
           props: toastData.props || {},
+          iconConfig: toastData.iconConfig,
+          stackIndex: displayIndex,
+          stackSize: stackSize,
         };
-
-        const offset = index * 75; // Stack toasts with 75px spacing
-        const position = toastData.position || 'top';
-        const calculatedTopOffset = position === 'top' ? topOffset + offset : topOffset;
-        const calculatedBottomOffset = position === 'bottom' ? bottomOffset + offset : bottomOffset;
 
         return (
           <Toast
             key={toastId}
             config={rendererProps}
-            topOffset={calculatedTopOffset}
-            bottomOffset={calculatedBottomOffset}
+            topOffset={topOffset}
+            bottomOffset={bottomOffset}
             renderer={Renderer}
+            stackIndex={displayIndex}
+            stackSize={stackSize}
           />
         );
       })}

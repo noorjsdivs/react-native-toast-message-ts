@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { BaseToastProps } from '../types';
+import { BaseToastProps, ToastIconConfig } from '../types';
 
 interface ExtendedBaseToastProps extends BaseToastProps {
   onClose?: () => void;
   hideCloseButton?: boolean;
+  /** Icon configuration options */
+  iconConfig?: ToastIconConfig;
 }
 
 export const BaseToast: React.FC<ExtendedBaseToastProps> = ({
@@ -24,16 +26,24 @@ export const BaseToast: React.FC<ExtendedBaseToastProps> = ({
   renderTrailingIcon,
   testID,
   accessibilityLabel,
+  iconConfig,
+  backgroundColor,
 }) => {
+  const hideLeadingIcon = iconConfig?.hideLeadingIcon ?? false;
+  const hideCloseIcon = iconConfig?.hideCloseIcon ?? hideCloseButton;
+  const closeIconColor = iconConfig?.closeIconColor;
+
   return (
     <TouchableOpacity
       testID={testID}
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
       activeOpacity={onPress ? activeOpacity : 1}
-      style={[styles.base, style]}
+      style={[styles.base, backgroundColor ? { backgroundColor } : undefined, style]}
     >
-      {renderLeadingIcon && <View style={styles.iconWrapper}>{renderLeadingIcon()}</View>}
+      {!hideLeadingIcon && renderLeadingIcon && (
+        <View style={styles.iconWrapper}>{renderLeadingIcon()}</View>
+      )}
       <View style={[styles.contentContainer, contentContainerStyle]}>
         {text1 && (
           <Text style={[styles.text1, text1Style]} numberOfLines={text1NumberOfLines}>
@@ -47,14 +57,16 @@ export const BaseToast: React.FC<ExtendedBaseToastProps> = ({
         )}
       </View>
       {renderTrailingIcon && renderTrailingIcon()}
-      {!hideCloseButton && (
+      {!hideCloseIcon && (
         <TouchableOpacity
           onPress={onClose}
           style={styles.closeButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           testID="toast-close-button"
         >
-          <Text style={styles.closeIcon}>✕</Text>
+          <Text style={[styles.closeIcon, closeIconColor ? { color: closeIconColor } : undefined]}>
+            ✕
+          </Text>
         </TouchableOpacity>
       )}
     </TouchableOpacity>

@@ -121,37 +121,86 @@ export default function App() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Custom Styling</Text>
+          <Text style={styles.sectionTitle}>🆕 Drawer-Style Stacking</Text>
 
           <TouchableOpacity
-            style={[styles.button, styles.primaryButton]}
-            onPress={() =>
-              Toast.show({
-                type: 'success',
-                text1: 'Dark Theme',
-                text2: 'Custom background and text colors',
-                backgroundColor: '#1a1a1a',
-                borderLeftColor: '#00ff00',
-                text1Style: { color: '#ffffff', fontWeight: 'bold' },
-                text2Style: { color: '#cccccc' },
-              })
-            }
+            style={[styles.button, styles.successButton]}
+            onPress={() => {
+              Toast.success('First Toast', 'This will move to the back');
+              setTimeout(() => Toast.info('Second Toast', 'This appears in front'), 500);
+              setTimeout(() => Toast.warning('Third Toast', 'Now this is the front toast!'), 1000);
+            }}
           >
-            <Text style={styles.buttonText}>Dark Theme Toast</Text>
+            <Text style={styles.buttonText}>Show Multiple Toasts</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.button, styles.primaryButton]}
+            onPress={() => {
+              Toast.success('Step 1', 'First task done');
+              setTimeout(() => Toast.info('Step 2', 'Processing...'), 400);
+              setTimeout(() => Toast.warning('Step 3', 'Almost done...'), 800);
+              setTimeout(() => Toast.success('Step 4', 'All done!'), 1200);
+            }}
+          >
+            <Text style={styles.buttonText}>Sequential Steps Animation</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🎭 Icon Configuration</Text>
+
+          <TouchableOpacity
+            style={[styles.button, styles.successButton]}
             onPress={() =>
-              Toast.show({
-                type: 'info',
-                text1: 'Custom Border',
-                text2: 'With purple border color',
-                borderLeftColor: '#9b59b6',
+              Toast.success('No Icons', 'Just text, clean design', {
+                iconConfig: {
+                  hideLeadingIcon: true,
+                  hideCloseIcon: true,
+                },
               })
             }
           >
-            <Text style={styles.buttonText}>Purple Border</Text>
+            <Text style={styles.buttonText}>No Icons (Text Only)</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.errorButton]}
+            onPress={() =>
+              Toast.error('No Close Button', 'Has icon but no close button', {
+                iconConfig: {
+                  hideCloseIcon: true,
+                },
+              })
+            }
+          >
+            <Text style={styles.buttonText}>No Close Button</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.infoButton]}
+            onPress={() =>
+              Toast.info('No Leading Icon', 'Has close button but no leading icon', {
+                iconConfig: {
+                  hideLeadingIcon: true,
+                },
+              })
+            }
+          >
+            <Text style={styles.buttonText}>No Leading Icon</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.warningButton]}
+            onPress={() =>
+              Toast.warning('Custom Icon Size', 'Larger icon for emphasis', {
+                iconConfig: {
+                  leadingIconSize: 32,
+                },
+              })
+            }
+          >
+            <Text style={[styles.buttonText, { color: '#664d03' }]}>Larger Icon Size</Text>
           </TouchableOpacity>
         </View>
 
@@ -168,55 +217,11 @@ export default function App() {
           >
             <Text style={styles.buttonText}>Toast with onPress</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.button, styles.primaryButton]}
-            onPress={() =>
-              Toast.success('Not Swipeable', 'Try swiping this toast', {
-                swipeable: false,
-              })
-            }
-          >
-            <Text style={styles.buttonText}>Non-Swipeable Toast</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Advanced</Text>
-
-          <TouchableOpacity
-            style={[styles.button, styles.primaryButton]}
-            onPress={() =>
-              Toast.show({
-                type: 'custom',
-                text1: 'Fully Custom Toast',
-                text2: 'With all options configured',
-                position: 'bottom',
-                duration: 5000,
-                backgroundColor: '#2c3e50',
-                borderLeftColor: '#e74c3c',
-                text1Style: {
-                  color: '#ecf0f1',
-                  fontSize: 18,
-                  fontWeight: 'bold',
-                },
-                text2Style: {
-                  color: '#bdc3c7',
-                  fontSize: 14,
-                },
-                animationDuration: 500,
-                onShow: () => console.log('Toast shown'),
-                onHide: () => console.log('Toast hidden'),
-              })
-            }
-          >
-            <Text style={styles.buttonText}>Fully Configured Toast</Text>
-          </TouchableOpacity>
         </View>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            🎨 Highly Customizable • 📱 Cross-Platform • ⚡ Performant
+            🎨 Drawer-Style Stacking • 📱 Cross-Platform • ⚡ Smooth Animations
           </Text>
         </View>
       </ScrollView>

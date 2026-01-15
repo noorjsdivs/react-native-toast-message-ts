@@ -1,6 +1,6 @@
 {
   "name": "react-native-toast-message-ts",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A modern, customizable toast notification library for React Native & Expo with TypeScript support, multi-toast queue, swipe-to-dismiss, and smooth animations",
   "main": "./lib/index.js",
   "module": "./lib/index.esm.js",

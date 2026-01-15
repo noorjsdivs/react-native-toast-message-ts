@@ -7,7 +7,7 @@ import { Text } from 'react-native';
 jest.mock('../components/SuccessToast', () => {
   const { Text, View } = require('react-native');
   return {
-    SuccessToast: (props: any) => (
+    SuccessToast: (props: { text1?: string; text2?: string }) => (
       <View>
         <Text>{props.text1}</Text>
         {props.text2 && <Text>{props.text2}</Text>}
@@ -18,7 +18,7 @@ jest.mock('../components/SuccessToast', () => {
 jest.mock('../components/ErrorToast', () => {
   const { Text, View } = require('react-native');
   return {
-    ErrorToast: (props: any) => (
+    ErrorToast: (props: { text1?: string; text2?: string }) => (
       <View>
         <Text>{props.text1}</Text>
         {props.text2 && <Text>{props.text2}</Text>}
@@ -29,7 +29,7 @@ jest.mock('../components/ErrorToast', () => {
 jest.mock('../components/InfoToast', () => {
   const { Text, View } = require('react-native');
   return {
-    InfoToast: (props: any) => (
+    InfoToast: (props: { text1?: string; text2?: string }) => (
       <View>
         <Text>{props.text1}</Text>
         {props.text2 && <Text>{props.text2}</Text>}
@@ -40,7 +40,7 @@ jest.mock('../components/InfoToast', () => {
 jest.mock('../components/BaseToast', () => {
   const { Text, View } = require('react-native');
   return {
-    BaseToast: (props: any) => (
+    BaseToast: (props: { text1?: string; text2?: string }) => (
       <View>
         <Text>{props.text1}</Text>
         {props.text2 && <Text>{props.text2}</Text>}
@@ -157,7 +157,7 @@ describe('ToastContainer', () => {
   });
 
   it('should use custom renderToast function', async () => {
-    const renderToast = jest.fn(({ text1 }: any) => <Text>{text1}</Text>);
+    const renderToast = jest.fn(({ text1 }: { text1?: string }) => <Text>{text1}</Text>);
 
     const { getByText } = render(
       <ToastContainer
