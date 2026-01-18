@@ -1,31 +1,34 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { BaseToast } from './BaseToast';
-import { BaseToastProps, ToastIconConfig } from '../types';
+import { BaseToastProps, ToastIconConfig, ToastStyleOverride } from '../types';
 import { COLORS } from '../colors';
 import { ToastIcon } from '../ToastIcon';
 
 interface WarningToastProps extends BaseToastProps {
   hide?: () => void;
   iconConfig?: ToastIconConfig;
+  styleOverride?: ToastStyleOverride;
 }
 
 export const WarningToast: React.FC<WarningToastProps> = props => {
-  const { iconConfig } = props;
+  const { iconConfig, styleOverride } = props;
+  const bgColor = styleOverride?.backgroundColor || COLORS.warning;
+  const textColor = styleOverride?.color || COLORS.white;
 
   return (
     <BaseToast
       {...props}
-      style={[styles.warning, props.style]}
-      text1Style={[styles.text1, props.text1Style]}
-      text2Style={[styles.text2, props.text2Style]}
+      style={[styles.warning, { backgroundColor: bgColor }, props.style]}
+      text1Style={[styles.text1, { color: textColor }, props.text1Style]}
+      text2Style={[styles.text2, { color: textColor }, props.text2Style]}
       renderLeadingIcon={
         iconConfig?.hideLeadingIcon
           ? undefined
           : () => (
               <ToastIcon
                 type="warning"
-                color={iconConfig?.leadingIconColor || COLORS.warningText}
+                color={iconConfig?.leadingIconColor || textColor}
                 size={iconConfig?.leadingIconSize || 24}
               />
             )
@@ -33,7 +36,7 @@ export const WarningToast: React.FC<WarningToastProps> = props => {
       onClose={props.hide}
       iconConfig={{
         ...iconConfig,
-        closeIconColor: iconConfig?.closeIconColor || COLORS.warningText,
+        closeIconColor: iconConfig?.closeIconColor || textColor,
       }}
     />
   );
@@ -41,17 +44,14 @@ export const WarningToast: React.FC<WarningToastProps> = props => {
 
 const styles = StyleSheet.create({
   warning: {
-    backgroundColor: COLORS.warning,
     borderRadius: 8,
   },
   text1: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: COLORS.warningText,
   },
   text2: {
     fontSize: 13,
-    color: COLORS.warningText,
-    opacity: 0.85,
+    opacity: 0.9,
   },
 });

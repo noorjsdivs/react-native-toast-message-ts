@@ -3,8 +3,8 @@ import { ToastType } from './types';
 export const COLORS = {
   success: '#28a745',
   error: '#dc3545',
-  warning: '#ffc107',
-  warningText: '#664d03', // Dark text for yellow background
+  warning: '#d4a106', // Dark yellow for better visibility
+  warningText: '#FFFFFF', // White text for dark yellow background
   info: '#17a2b8',
   white: '#FFFFFF',
   black: '#000000',
@@ -31,10 +31,9 @@ export const getDefaultBackgroundColor = (type: ToastType): string => {
 
 export const getDefaultTextColor = (type: ToastType): string => {
   switch (type) {
-    case 'warning':
-      return COLORS.warningText;
     case 'success':
     case 'error':
+    case 'warning':
     case 'info':
       return COLORS.white;
     default:

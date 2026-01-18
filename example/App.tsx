@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,11 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
-import { ToastContainer, Toast } from 'react-native-toast-message-ts';
+import { ToastContainer, Toast, ToastAnimationType } from 'react-native-toast-message-ts';
 
 export default function App() {
+  const [animation, setAnimation] = useState<ToastAnimationType>('slide-fade');
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -126,29 +128,104 @@ export default function App() {
           <TouchableOpacity
             style={[styles.button, styles.successButton]}
             onPress={() => {
-              Toast.success('First Toast', 'This will move to the back');
-              setTimeout(() => Toast.info('Second Toast', 'This appears in front'), 500);
-              setTimeout(() => Toast.warning('Third Toast', 'Now this is the front toast!'), 1000);
+              Toast.success('First Toast', 'This will be dismissed');
+              setTimeout(() => Toast.info('Second Toast', 'This appears next'), 500);
+              setTimeout(() => Toast.warning('Third Toast', 'Now this is showing!'), 1000);
             }}
           >
-            <Text style={styles.buttonText}>Show Multiple Toasts</Text>
+            <Text style={styles.buttonText}>Show Multiple Toasts (Queue)</Text>
+          </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, styles.primaryButton]}
+              onPress={() => {
+                Toast.success('Step 1', 'First task done');
+                setTimeout(() => Toast.info('Step 2', 'Processing...'), 400);
+                setTimeout(() => Toast.warning('Step 3', 'Almost done...'), 800);
+                setTimeout(() => Toast.success('Step 4', 'All done! Tap stack to expand!'), 1200);
+              }}
+            >
+              <Text style={styles.buttonText}>Sequential Steps (Tap Stack to Expand)</Text>
+            </TouchableOpacity>
+          </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>� Animation Types</Text>
+          <Text style={styles.sectionDescription}>
+            Current animation: <Text style={styles.highlight}>{animation}</Text>
+          </Text>
+
+          <View style={styles.animationPicker}>
+            <TouchableOpacity
+              style={[
+                styles.animationButton,
+                animation === 'slide-fade' && styles.animationButtonActive,
+              ]}
+              onPress={() => setAnimation('slide-fade')}
+            >
+              <Text
+                style={[
+                  styles.animationButtonText,
+                  animation === 'slide-fade' && styles.animationButtonTextActive,
+                ]}
+              >
+                Slide + Fade
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.animationButton,
+                animation === 'slide' && styles.animationButtonActive,
+              ]}
+              onPress={() => setAnimation('slide')}
+            >
+              <Text
+                style={[
+                  styles.animationButtonText,
+                  animation === 'slide' && styles.animationButtonTextActive,
+                ]}
+              >
+                Slide Only
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.animationButton, animation === 'fade' && styles.animationButtonActive]}
+              onPress={() => setAnimation('fade')}
+            >
+              <Text
+                style={[
+                  styles.animationButtonText,
+                  animation === 'fade' && styles.animationButtonTextActive,
+                ]}
+              >
+                Fade Only
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.button, styles.successButton]}
+            onPress={() =>
+              Toast.success('Animation Test', `Using "${animation}" animation`, { position: 'top' })
+            }
+          >
+            <Text style={styles.buttonText}>Test at Top</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.button, styles.primaryButton]}
-            onPress={() => {
-              Toast.success('Step 1', 'First task done');
-              setTimeout(() => Toast.info('Step 2', 'Processing...'), 400);
-              setTimeout(() => Toast.warning('Step 3', 'Almost done...'), 800);
-              setTimeout(() => Toast.success('Step 4', 'All done!'), 1200);
-            }}
+            style={[styles.button, styles.infoButton]}
+            onPress={() =>
+              Toast.info('Animation Test', `Using "${animation}" animation`, { position: 'bottom' })
+            }
           >
-            <Text style={styles.buttonText}>Sequential Steps Animation</Text>
+            <Text style={styles.buttonText}>Test at Bottom</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🎭 Icon Configuration</Text>
+          <Text style={styles.sectionTitle}>�🎭 Icon Configuration</Text>
 
           <TouchableOpacity
             style={[styles.button, styles.successButton]}
@@ -200,7 +277,7 @@ export default function App() {
               })
             }
           >
-            <Text style={[styles.buttonText, { color: '#664d03' }]}>Larger Icon Size</Text>
+            <Text style={styles.buttonText}>Larger Icon Size</Text>
           </TouchableOpacity>
         </View>
 
@@ -226,7 +303,15 @@ export default function App() {
         </View>
       </ScrollView>
 
-      <ToastContainer topOffset={50} bottomOffset={50} />
+      <ToastContainer
+        topOffset={50}
+        bottomOffset={50}
+        position="top"
+        animation={animation}
+        // Example of custom color overrides:
+        // success={{ backgroundColor: 'blue', color: 'white' }}
+        // warning={{ backgroundColor: '#cc8800', color: 'white' }}
+      />
     </SafeAreaView>
   );
 }
@@ -270,6 +355,38 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 16,
     color: '#2c3e50',
+  },
+  sectionDescription: {
+    fontSize: 14,
+    color: '#7f8c8d',
+    marginBottom: 12,
+  },
+  highlight: {
+    fontWeight: 'bold',
+    color: '#007bff',
+  },
+  animationPicker: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    gap: 8,
+  },
+  animationButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#e9ecef',
+    alignItems: 'center',
+  },
+  animationButtonActive: {
+    backgroundColor: '#007bff',
+  },
+  animationButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#495057',
+  },
+  animationButtonTextActive: {
+    color: '#ffffff',
   },
   button: {
     padding: 16,

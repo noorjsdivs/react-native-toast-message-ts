@@ -11,11 +11,11 @@ describe('colors', () => {
     it('should export color constants', () => {
       expect(COLORS.success).toBe('#28a745');
       expect(COLORS.error).toBe('#dc3545');
-      expect(COLORS.warning).toBe('#ffc107');
+      expect(COLORS.warning).toBe('#d4a106');
       expect(COLORS.info).toBe('#17a2b8');
       expect(COLORS.white).toBe('#FFFFFF');
       expect(COLORS.black).toBe('#000000');
-      expect(COLORS.warningText).toBe('#664d03');
+      expect(COLORS.warningText).toBe('#FFFFFF');
     });
   });
 
@@ -30,14 +30,11 @@ describe('colors', () => {
   });
 
   describe('getDefaultTextColor', () => {
-    it('should return white for success, error, info', () => {
+    it('should return white for success, error, info, warning', () => {
       expect(getDefaultTextColor('success')).toBe(COLORS.white);
       expect(getDefaultTextColor('error')).toBe(COLORS.white);
       expect(getDefaultTextColor('info')).toBe(COLORS.white);
-    });
-
-    it('should return dark text for warning', () => {
-      expect(getDefaultTextColor('warning')).toBe(COLORS.warningText);
+      expect(getDefaultTextColor('warning')).toBe(COLORS.white);
     });
 
     it('should return default text for custom type', () => {

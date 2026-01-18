@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { Animated, PanResponder, StyleSheet } from 'react-native';
+import { Animated, PanResponder, StyleSheet, Easing } from 'react-native';
 
-import { ToastConfigParams } from './types';
+import { ToastConfigParams, ToastAnimationType } from './types';
 
 export interface ToastProps {
   config: ToastConfigParams;
@@ -12,6 +12,8 @@ export interface ToastProps {
   stackIndex?: number;
   /** Total number of toasts */
   stackSize?: number;
+  /** Animation type */
+  animation?: ToastAnimationType;
 }
 
 // Animation configuration for smooth drawer effect
@@ -25,7 +27,11 @@ const ANIMATION_CONFIG = {
   // Maximum stack depth to show
   maxVisibleStack: 5,
   // Opacity reduction per stack level
-  opacityReduction: 0.15,
+  opacityReduction: 0.1,
+  // Slide distance
+  slideDistance: 120,
+  // Height estimate for expansion
+  expandedHeight: 80, // 60px height + 20px gap
 };
 
 export const Toast: React.FC<ToastProps> = ({
@@ -35,6 +41,7 @@ export const Toast: React.FC<ToastProps> = ({
   renderer,
   stackIndex = 0,
   stackSize = 1,
+  animation = 'slide-fade',
 }) => {
   const {
     position,
@@ -44,12 +51,19 @@ export const Toast: React.FC<ToastProps> = ({
     hide,
     onShow,
     onHide,
+    isExpanded,
+    toggleExpanded,
   } = config as ToastConfigParams & {
     autoHide?: boolean;
     visibilityTime?: number;
     onShow?: () => void;
     onHide?: () => void;
+    isExpanded?: boolean;
+    toggleExpanded?: () => void;
   };
+
+  // Use animation from config if provided, otherwise use prop
+  const animationType = config.animation || animation;
 
   const translateY = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -57,27 +71,47 @@ export const Toast: React.FC<ToastProps> = ({
   const stackTranslateY = useRef(new Animated.Value(0)).current;
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Calculate drawer-style stacking values
-  const targetScale = Math.max(1 - stackIndex * ANIMATION_CONFIG.scaleReduction, 0.85);
-  const targetStackOffset =
-    position === 'top'
-      ? stackIndex * ANIMATION_CONFIG.stackOffset
-      : -stackIndex * ANIMATION_CONFIG.stackOffset;
-  const targetOpacity = Math.max(1 - stackIndex * ANIMATION_CONFIG.opacityReduction, 0.4);
+  // Calculate stacking values based on state
+  let targetScale = 1;
+  let targetStackOffset = 0;
+  let targetOpacity = 1;
+
+  if (isExpanded) {
+    // Expanded state: No scaling, vertical stacking with gap
+    targetScale = 1;
+    targetOpacity = 1;
+
+    // Calculate expanded offset
+    // Stack Index 0 is at pos 0
+    // Stack Index 1 is at pos 1 * height
+    const expandedOffset = stackIndex * ANIMATION_CONFIG.expandedHeight;
+    targetStackOffset = position === 'top' ? expandedOffset : -expandedOffset;
+  } else {
+    // Collapsed state: Scale down, small vertical offset
+    targetScale = Math.max(1 - stackIndex * ANIMATION_CONFIG.scaleReduction, 0.85);
+    const collapsedOffset = stackIndex * ANIMATION_CONFIG.stackOffset;
+    targetStackOffset = position === 'top' ? collapsedOffset : -collapsedOffset;
+    targetOpacity = Math.max(1 - stackIndex * ANIMATION_CONFIG.opacityReduction, 0.6);
+  }
 
   // Z-index: higher for front toasts (newest has highest z-index)
+  // When expanded, we might want to reverse logic or keep it?
+  // If keeping, 0 overlaying 1 overlaying 2. This works fine for expanded too.
   const zIndex = 9999 - stackIndex;
 
   // Pan responder for swipe to dismiss
   const panResponder = useMemo(
     () =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => stackIndex === 0, // Only front toast is swipeable
+        // Enable swipe for all items if expanded, or only front if collapsed
+        onStartShouldSetPanResponder: () => isExpanded || stackIndex === 0,
         onMoveShouldSetPanResponder: (_, gestureState) => {
-          return stackIndex === 0 && Math.abs(gestureState.dy) > 5;
+          const active = isExpanded || stackIndex === 0;
+          return active && Math.abs(gestureState.dy) > 5;
         },
         onPanResponderMove: (_, gestureState) => {
-          if (stackIndex !== 0) return;
+          if (!isExpanded && stackIndex !== 0) return;
+
           if (position === 'top' && gestureState.dy < 0) {
             translateY.setValue(gestureState.dy);
           } else if (position === 'bottom' && gestureState.dy > 0) {
@@ -85,7 +119,8 @@ export const Toast: React.FC<ToastProps> = ({
           }
         },
         onPanResponderRelease: (_, gestureState) => {
-          if (stackIndex !== 0) return;
+          if (!isExpanded && stackIndex !== 0) return;
+
           const threshold = 50;
           const shouldDismiss =
             (position === 'top' && gestureState.dy < -threshold) ||
@@ -102,47 +137,116 @@ export const Toast: React.FC<ToastProps> = ({
           }
         },
       }),
-    [hide, position, translateY, stackIndex],
+    [hide, position, translateY, stackIndex, isExpanded],
   );
 
   const animateShow = () => {
-    const startPosition = position === 'top' ? -100 : 100;
-    translateY.setValue(startPosition);
-    opacity.setValue(0);
+    // Get slide distance based on position (top slides from above, bottom slides from below)
+    const slideDistance = ANIMATION_CONFIG.slideDistance;
+    const startPosition = position === 'top' ? -slideDistance : slideDistance;
+
+    // Set initial values based on animation type
+    switch (animationType) {
+      case 'fade':
+        translateY.setValue(0);
+        opacity.setValue(0);
+        break;
+      case 'slide':
+        translateY.setValue(startPosition);
+        opacity.setValue(1);
+        break;
+      case 'slide-fade':
+      default:
+        translateY.setValue(startPosition);
+        opacity.setValue(0);
+        break;
+    }
+
     scale.setValue(targetScale);
     stackTranslateY.setValue(targetStackOffset);
 
-    Animated.parallel([
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: ANIMATION_CONFIG.duration,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: targetOpacity,
-        duration: ANIMATION_CONFIG.duration,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
+    const animations: Animated.CompositeAnimation[] = [];
+
+    // Add slide animation if needed
+    if (animationType === 'slide' || animationType === 'slide-fade') {
+      animations.push(
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: ANIMATION_CONFIG.duration,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      );
+    }
+
+    // Add fade animation if needed
+    if (animationType === 'fade' || animationType === 'slide-fade') {
+      animations.push(
+        Animated.timing(opacity, {
+          toValue: targetOpacity,
+          duration: ANIMATION_CONFIG.duration,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      );
+    } else {
+      // For slide-only, still animate to target opacity for stacking
+      animations.push(
+        Animated.timing(opacity, {
+          toValue: targetOpacity,
+          duration: ANIMATION_CONFIG.duration / 2,
+          useNativeDriver: true,
+        }),
+      );
+    }
+
+    Animated.parallel(animations).start(() => {
       onShow?.();
     });
   };
 
   const animateHide = () => {
-    const endPosition = position === 'top' ? -100 : 100;
+    // Get slide distance based on position (exit in same direction)
+    const slideDistance = ANIMATION_CONFIG.slideDistance;
+    const endPosition = position === 'top' ? -slideDistance : slideDistance;
 
-    Animated.parallel([
-      Animated.timing(translateY, {
-        toValue: endPosition,
-        duration: ANIMATION_CONFIG.duration,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: ANIMATION_CONFIG.duration,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
+    const animations: Animated.CompositeAnimation[] = [];
+
+    // Add slide animation if needed
+    if (animationType === 'slide' || animationType === 'slide-fade') {
+      animations.push(
+        Animated.timing(translateY, {
+          toValue: endPosition,
+          duration: ANIMATION_CONFIG.duration,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      );
+    }
+
+    // Add fade animation if needed
+    if (animationType === 'fade' || animationType === 'slide-fade') {
+      animations.push(
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: ANIMATION_CONFIG.duration,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      );
+    } else {
+      // For slide-only, quickly fade at the end
+      animations.push(
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: ANIMATION_CONFIG.duration / 2,
+          delay: ANIMATION_CONFIG.duration / 2,
+          useNativeDriver: true,
+        }),
+      );
+    }
+
+    Animated.parallel(animations).start(() => {
       onHide?.();
     });
   };
@@ -166,13 +270,24 @@ export const Toast: React.FC<ToastProps> = ({
         useNativeDriver: true,
       }),
     ]).start();
-  }, [stackIndex, targetScale, targetStackOffset, targetOpacity, isVisible]);
+  }, [
+    stackIndex,
+    targetScale,
+    targetStackOffset,
+    targetOpacity,
+    isVisible,
+    scale,
+    stackTranslateY,
+    opacity,
+  ]);
 
   useEffect(() => {
     if (isVisible) {
       animateShow();
-      // Only auto-hide the front toast
-      if (autoHide && visibilityTime > 0 && stackIndex === 0) {
+      // Only auto-hide the front toast, AND only if not expanded
+      // If expanded, we probably want to pause auto-hide or let them stay?
+      // For now, let's keep auto-hide logic simple: pause if expanded?
+      if (autoHide && visibilityTime > 0 && stackIndex === 0 && !isExpanded) {
         hideTimeoutRef.current = setTimeout(hide, visibilityTime);
       }
     } else {
@@ -185,21 +300,21 @@ export const Toast: React.FC<ToastProps> = ({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isVisible]);
+  }, [isVisible, isExpanded]); // added isExpanded dependency to restart/cancel timer
 
-  // Clear/reset timer when becoming front toast
+  // Clear/reset timer when becoming front toast or checking expansion
   useEffect(() => {
-    if (stackIndex === 0 && isVisible && autoHide && visibilityTime > 0) {
+    if (stackIndex === 0 && isVisible && autoHide && visibilityTime > 0 && !isExpanded) {
       if (hideTimeoutRef.current) {
         clearTimeout(hideTimeoutRef.current);
       }
       hideTimeoutRef.current = setTimeout(hide, visibilityTime);
-    } else if (stackIndex !== 0 && hideTimeoutRef.current) {
+    } else if ((stackIndex !== 0 || isExpanded) && hideTimeoutRef.current) {
       clearTimeout(hideTimeoutRef.current);
       hideTimeoutRef.current = null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stackIndex]);
+  }, [stackIndex, isExpanded]);
 
   // Don't render if beyond max visible stack
   if (stackIndex >= ANIMATION_CONFIG.maxVisibleStack) {
@@ -207,6 +322,23 @@ export const Toast: React.FC<ToastProps> = ({
   }
 
   const positionStyle = position === 'top' ? { top: topOffset } : { bottom: bottomOffset };
+
+  // Intercept onPress to handle expansion toggle
+  const handlePress = () => {
+    if (!isExpanded && stackSize > 1 && toggleExpanded) {
+      toggleExpanded();
+    } else {
+      config.onPress?.();
+    }
+  };
+
+  // Create a modified renderer wrapper to hijack onPress
+  // We can't easily modify the internal TouchableOpacity of the rendered component
+  // unless we pass a modified `config` to `renderer`.
+  const rendererConfig = {
+    ...config,
+    onPress: handlePress, // Override the onPress passed to the component
+  };
 
   return (
     <Animated.View
@@ -220,11 +352,11 @@ export const Toast: React.FC<ToastProps> = ({
           elevation: zIndex, // Android elevation
         },
       ]}
-      {...(stackIndex === 0 ? panResponder.panHandlers : {})}
+      {...panResponder.panHandlers}
       testID="toast-animated-view"
-      pointerEvents={stackIndex === 0 ? 'auto' : 'box-none'}
+      pointerEvents={isExpanded || stackIndex === 0 ? 'auto' : 'box-none'}
     >
-      {renderer({ ...config, stackIndex, stackSize })}
+      {renderer({ ...rendererConfig, stackIndex, stackSize })}
     </Animated.View>
   );
 };

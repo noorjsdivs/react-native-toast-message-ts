@@ -5,6 +5,17 @@ export type ToastType = 'success' | 'error' | 'warning' | 'info' | string;
 
 export type ToastPosition = 'top' | 'bottom';
 
+/** Animation type for toast entrance/exit */
+export type ToastAnimationType = 'fade' | 'slide' | 'slide-fade';
+
+/** Style override for toast variants */
+export interface ToastStyleOverride {
+  /** Background color for the toast */
+  backgroundColor?: string;
+  /** Text color for the toast */
+  color?: string;
+}
+
 export interface ToastIconConfig {
   /** Hide the leading icon (checkmark, X, etc.) */
   hideLeadingIcon?: boolean;
@@ -60,6 +71,14 @@ export interface ToastConfigParams<Props = Record<string, unknown>> {
   stackIndex?: number;
   /** Total number of toasts in the stack */
   stackSize?: number;
+  /** Style override from container */
+  styleOverride?: ToastStyleOverride;
+  /** Animation type for entrance/exit */
+  animation?: ToastAnimationType;
+  /** Whether the stack is currently expanded */
+  isExpanded?: boolean;
+  /** Function to toggle expansion state */
+  toggleExpanded?: () => void;
 }
 
 export type ToastConfig = {
