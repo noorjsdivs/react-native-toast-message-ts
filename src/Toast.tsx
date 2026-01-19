@@ -14,6 +14,8 @@ export interface ToastProps {
   stackSize?: number;
   /** Animation type */
   animation?: ToastAnimationType;
+  /** Whether the toast list is expanded */
+  isExpanded?: boolean;
 }
 
 // Animation configuration for smooth drawer effect
@@ -21,17 +23,17 @@ const ANIMATION_CONFIG = {
   duration: 300,
   useNativeDriver: true,
   // Scale reduction per stack level
-  scaleReduction: 0.05,
+  scaleReduction: 0.04,
   // Vertical offset per stack level (drawer effect)
-  stackOffset: 12,
+  stackOffset: 10,
   // Maximum stack depth to show
   maxVisibleStack: 5,
   // Opacity reduction per stack level
-  opacityReduction: 0.1,
+  opacityReduction: 0.08,
   // Slide distance
   slideDistance: 120,
-  // Height estimate for expansion
-  expandedHeight: 80, // 60px height + 20px gap
+  // Height estimate for expansion (toast height + gap)
+  expandedHeight: 75,
 };
 
 export const Toast: React.FC<ToastProps> = ({
@@ -42,25 +44,17 @@ export const Toast: React.FC<ToastProps> = ({
   stackIndex = 0,
   stackSize = 1,
   animation = 'slide-fade',
+  isExpanded: propIsExpanded = false,
 }) => {
-  const {
-    position,
-    isVisible,
-    autoHide = true,
-    visibilityTime = 4000,
-    hide,
-    onShow,
-    onHide,
-    isExpanded,
-    toggleExpanded,
-  } = config as ToastConfigParams & {
-    autoHide?: boolean;
-    visibilityTime?: number;
-    onShow?: () => void;
-    onHide?: () => void;
-    isExpanded?: boolean;
-    toggleExpanded?: () => void;
-  };
+  const { position, isVisible, hide, onShow, onHide, toggleExpanded } =
+    config as ToastConfigParams & {
+      onShow?: () => void;
+      onHide?: () => void;
+      toggleExpanded?: () => void;
+    };
+
+  // Use prop isExpanded for consistency
+  const isExpanded = propIsExpanded;
 
   // Use animation from config if provided, otherwise use prop
   const animationType = config.animation || animation;
@@ -104,10 +98,15 @@ export const Toast: React.FC<ToastProps> = ({
     () =>
       PanResponder.create({
         // Enable swipe for all items if expanded, or only front if collapsed
-        onStartShouldSetPanResponder: () => isExpanded || stackIndex === 0,
+        onStartShouldSetPanResponder: () => false, // Let TouchableOpacity handle taps
         onMoveShouldSetPanResponder: (_, gestureState) => {
-          const active = isExpanded || stackIndex === 0;
-          return active && Math.abs(gestureState.dy) > 5;
+          const canSwipe = isExpanded || stackIndex === 0;
+          // Only capture if significant vertical movement
+          return (
+            canSwipe &&
+            Math.abs(gestureState.dy) > 10 &&
+            Math.abs(gestureState.dy) > Math.abs(gestureState.dx)
+          );
         },
         onPanResponderMove: (_, gestureState) => {
           if (!isExpanded && stackIndex !== 0) return;
@@ -257,16 +256,19 @@ export const Toast: React.FC<ToastProps> = ({
       Animated.timing(scale, {
         toValue: targetScale,
         duration: ANIMATION_CONFIG.duration,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
       Animated.timing(stackTranslateY, {
         toValue: targetStackOffset,
         duration: ANIMATION_CONFIG.duration,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
       Animated.timing(opacity, {
         toValue: isVisible ? targetOpacity : 0,
         duration: ANIMATION_CONFIG.duration,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
     ]).start();
@@ -279,42 +281,25 @@ export const Toast: React.FC<ToastProps> = ({
     scale,
     stackTranslateY,
     opacity,
+    isExpanded,
   ]);
 
+  // Handle show/hide animations
   useEffect(() => {
     if (isVisible) {
       animateShow();
-      // Only auto-hide the front toast, AND only if not expanded
-      // If expanded, we probably want to pause auto-hide or let them stay?
-      // For now, let's keep auto-hide logic simple: pause if expanded?
-      if (autoHide && visibilityTime > 0 && stackIndex === 0 && !isExpanded) {
-        hideTimeoutRef.current = setTimeout(hide, visibilityTime);
-      }
     } else {
       animateHide();
     }
-
+    // Auto-hide is now managed by ToastContainer
+    const timeoutRef = hideTimeoutRef.current;
     return () => {
-      if (hideTimeoutRef.current) {
-        clearTimeout(hideTimeoutRef.current);
+      if (timeoutRef) {
+        clearTimeout(timeoutRef);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isVisible, isExpanded]); // added isExpanded dependency to restart/cancel timer
-
-  // Clear/reset timer when becoming front toast or checking expansion
-  useEffect(() => {
-    if (stackIndex === 0 && isVisible && autoHide && visibilityTime > 0 && !isExpanded) {
-      if (hideTimeoutRef.current) {
-        clearTimeout(hideTimeoutRef.current);
-      }
-      hideTimeoutRef.current = setTimeout(hide, visibilityTime);
-    } else if ((stackIndex !== 0 || isExpanded) && hideTimeoutRef.current) {
-      clearTimeout(hideTimeoutRef.current);
-      hideTimeoutRef.current = null;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stackIndex, isExpanded]);
+  }, [isVisible]);
 
   // Don't render if beyond max visible stack
   if (stackIndex >= ANIMATION_CONFIG.maxVisibleStack) {
@@ -323,21 +308,28 @@ export const Toast: React.FC<ToastProps> = ({
 
   const positionStyle = position === 'top' ? { top: topOffset } : { bottom: bottomOffset };
 
-  // Intercept onPress to handle expansion toggle
+  // Handle press on the toast - toggle expand/collapse for stacked toasts
   const handlePress = () => {
-    if (!isExpanded && stackSize > 1 && toggleExpanded) {
+    // If collapsed and multiple toasts, toggle to expand
+    if (!isExpanded && stackSize > 1 && stackIndex === 0 && toggleExpanded) {
       toggleExpanded();
-    } else {
-      config.onPress?.();
+      return;
     }
+    // If expanded and tapping any toast, collapse
+    if (isExpanded && toggleExpanded) {
+      toggleExpanded();
+      return;
+    }
+    // Otherwise, call the user's onPress if provided
+    config.onPress?.();
   };
 
-  // Create a modified renderer wrapper to hijack onPress
-  // We can't easily modify the internal TouchableOpacity of the rendered component
-  // unless we pass a modified `config` to `renderer`.
+  // Create modified config for the renderer
+  // Override onPress to use our handlePress
   const rendererConfig = {
     ...config,
-    onPress: handlePress, // Override the onPress passed to the component
+    onPress: handlePress,
+    isExpanded,
   };
 
   return (
@@ -354,7 +346,7 @@ export const Toast: React.FC<ToastProps> = ({
       ]}
       {...panResponder.panHandlers}
       testID="toast-animated-view"
-      pointerEvents={isExpanded || stackIndex === 0 ? 'auto' : 'box-none'}
+      pointerEvents={isExpanded || stackIndex === 0 ? 'auto' : 'none'}
     >
       {renderer({ ...rendererConfig, stackIndex, stackSize })}
     </Animated.View>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { toastManager } from './ToastManager';
 import { Toast } from './Toast';
@@ -45,6 +45,9 @@ const defaultComponents: ToastConfig = {
   base: (props: ToastConfigParams) => <BaseToast {...props} onClose={props.hide} />,
 };
 
+// Delay between sequential toast dismissals (FIFO)
+const DISMISS_STAGGER_DELAY = 250;
+
 export interface ToastItem extends ToastData {
   id: string;
   createdAt: number;
@@ -65,6 +68,14 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
 }) => {
   const [toastQueue, setToastQueue] = useState<ToastItem[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [closingToasts, setClosingToasts] = useState<Set<string>>(new Set());
+  const autoHideTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const expandedRef = useRef(false);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    expandedRef.current = isExpanded;
+  }, [isExpanded]);
 
   // Get style override for a toast type
   const getStyleOverride = useCallback(
@@ -92,34 +103,86 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
     };
   }, [config]);
 
-  const removeToast = useCallback((toastId: string) => {
-    setToastQueue(prev => {
-      if (!prev) return [];
-      const toastToRemove = prev.find(t => t.id === toastId);
-      if (toastToRemove) {
-        toastToRemove.onHide?.();
-      }
-      const newQueue = prev.filter(t => t.id !== toastId);
-      if (newQueue.length === 0) {
-        setIsExpanded(false);
-      }
-      return newQueue;
-    });
+  // Clear timer for a specific toast
+  const clearTimerForToast = useCallback((toastId: string) => {
+    const timer = autoHideTimersRef.current.get(toastId);
+    if (timer) {
+      clearTimeout(timer);
+      autoHideTimersRef.current.delete(toastId);
+    }
   }, []);
 
+  // Remove a toast immediately (used by X button)
+  const removeToastImmediately = useCallback(
+    (toastId: string) => {
+      clearTimerForToast(toastId);
+      setClosingToasts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(toastId);
+        return newSet;
+      });
+      setToastQueue(prev => {
+        if (!prev) return [];
+        const toastToRemove = prev.find(t => t.id === toastId);
+        if (toastToRemove) {
+          toastToRemove.onHide?.();
+        }
+        const newQueue = prev.filter(t => t.id !== toastId);
+        // Auto-collapse when 1 or fewer toasts remain
+        if (newQueue.length <= 1) {
+          // Use setTimeout to avoid synchronous setState in render cycle
+          setTimeout(() => setIsExpanded(false), 0);
+        }
+        return newQueue;
+      });
+    },
+    [clearTimerForToast],
+  );
+
+  // Mark toast as closing (triggers exit animation), then remove after animation
+  const dismissToast = useCallback(
+    (toastId: string) => {
+      clearTimerForToast(toastId);
+      setClosingToasts(prev => new Set(prev).add(toastId));
+      // Remove after animation completes
+      setTimeout(() => {
+        removeToastImmediately(toastId);
+      }, 300); // Match animation duration
+    },
+    [clearTimerForToast, removeToastImmediately],
+  );
+
+  // Auto-hide handler for a specific toast (FIFO - oldest first)
+  const scheduleAutoHide = useCallback(
+    (toastItem: ToastItem) => {
+      // Don't schedule if already scheduled or expanded
+      if (autoHideTimersRef.current.has(toastItem.id)) return;
+      if (expandedRef.current) return;
+
+      const visTime = toastItem.visibilityTime ?? defaultVisibilityTime;
+      if (visTime <= 0 || toastItem.autoHide === false) return;
+
+      const timer = setTimeout(() => {
+        autoHideTimersRef.current.delete(toastItem.id);
+        dismissToast(toastItem.id);
+      }, visTime);
+      autoHideTimersRef.current.set(toastItem.id, timer);
+    },
+    [defaultVisibilityTime, dismissToast],
+  );
+
+  // Handle global hide (from toastManager.hide())
   const handleHide = useCallback(() => {
-    // Hide the newest (front) toast - it's at the end of the array
+    // Hide the oldest toast (FIFO) - it's at the beginning of the array
     setToastQueue(prev => {
       if (!prev || prev.length === 0) return prev || [];
-      const newQueue = [...prev];
-      const removed = newQueue.pop(); // Remove newest (front) toast
-      removed?.onHide?.();
-      if (newQueue.length === 0) {
-        setIsExpanded(false);
+      const oldestToast = prev[0];
+      if (oldestToast) {
+        dismissToast(oldestToast.id);
       }
-      return newQueue;
+      return prev; // dismissToast will handle removal
     });
-  }, []);
+  }, [dismissToast]);
 
   const handleShow = useCallback(
     (data: ToastData) => {
@@ -129,23 +192,63 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
         visibilityTime: data.visibilityTime ?? defaultVisibilityTime,
         createdAt: Date.now(),
       };
-      // Add new toast to the end (newest = front)
-      setToastQueue(prev => [...(prev || []), toastItem]);
+      // Add new toast to the end (newest at the end, oldest at the start)
+      setToastQueue(prev => {
+        const newQueue = [...(prev || []), toastItem];
+        return newQueue;
+      });
+      // Schedule auto-hide for this toast
+      // Use a small delay to ensure state is updated
+      setTimeout(() => {
+        scheduleAutoHide(toastItem);
+      }, 50);
     },
-    [defaultVisibilityTime],
+    [defaultVisibilityTime, scheduleAutoHide],
   );
 
   const toggleExpanded = useCallback(() => {
-    setIsExpanded(prev => !prev);
-  }, []);
+    setIsExpanded(prev => {
+      const newExpanded = !prev;
+      if (newExpanded) {
+        // Pause all auto-hide timers when expanded
+        autoHideTimersRef.current.forEach(timer => {
+          clearTimeout(timer);
+        });
+        autoHideTimersRef.current.clear();
+      } else {
+        // Resume auto-hide timers when collapsed
+        // Reschedule all toasts with staggered delays
+        setToastQueue(currentQueue => {
+          currentQueue.forEach((toast, index) => {
+            const delay = index * DISMISS_STAGGER_DELAY;
+            const visTime = toast.visibilityTime ?? defaultVisibilityTime;
+            if (visTime > 0 && toast.autoHide !== false) {
+              const timer = setTimeout(() => {
+                autoHideTimersRef.current.delete(toast.id);
+                dismissToast(toast.id);
+              }, visTime + delay);
+              autoHideTimersRef.current.set(toast.id, timer);
+            }
+          });
+          return currentQueue;
+        });
+      }
+      return newExpanded;
+    });
+  }, [defaultVisibilityTime, dismissToast]);
 
   useEffect(() => {
     const unsubscribeShow = toastManager.subscribe(handleShow);
     const unsubscribeHide = toastManager.subscribeToHide(handleHide);
 
+    // Copy ref to local variable for cleanup
+    const timersRef = autoHideTimersRef.current;
     return () => {
       unsubscribeShow();
       unsubscribeHide();
+      // Clear all timers on unmount
+      timersRef.forEach(timer => clearTimeout(timer));
+      timersRef.clear();
     };
   }, [handleShow, handleHide]);
 
@@ -154,9 +257,10 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
   }
 
   // Determine which toasts to show
-  // We want the last N items, where N is maxVisibleToasts
-  // Example: Queue [A, B, C, D, E], Max 3 => Show [C, D, E]
-  // E is newest/front (index 0 in stack), D is index 1, C is index 2
+  // Queue: [oldest, ..., newest]
+  // We want the last N items for the stack display
+  // In collapsed view: newest is on top (stackIndex 0)
+  // In expanded view: show all visible toasts in a list
   const visibleToasts = toastQueue.slice(-maxVisibleToasts);
 
   return (
@@ -165,19 +269,17 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
         const { type = 'success' } = toastItem;
         const Renderer = mergedConfig[type] || mergedConfig.info;
         const toastId = toastItem.id;
+        const isClosing = closingToasts.has(toastId);
 
-        // Calculate stack index
-        // visibleToasts is [..., newest]. length=N.
-        // Item at index i has stackIndex = N - 1 - i
-        // Example: [C, D, E]. E (last, i=2) -> 3-1-2 = 0. Correct.
+        // Stack index: newest (last in array) = 0, oldest = N-1
         const stackIndex = visibleToasts.length - 1 - index;
 
-        // Hide function for this specific toast
-        const hideThisToast = () => removeToast(toastId);
+        // Hide function for this specific toast (X button - immediate)
+        const hideThisToast = () => removeToastImmediately(toastId);
 
         const rendererProps: ToastConfigParams = {
           ...toastItem,
-          isVisible: true,
+          isVisible: !isClosing,
           show: params => toastManager.show(params),
           hide: hideThisToast,
           position: toastItem.position || defaultPosition,
@@ -202,6 +304,7 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
             stackIndex={stackIndex}
             stackSize={toastQueue.length}
             animation={defaultAnimation}
+            isExpanded={isExpanded}
           />
         );
       })}
