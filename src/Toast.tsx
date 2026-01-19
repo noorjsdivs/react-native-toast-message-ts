@@ -19,7 +19,7 @@ export interface ToastProps {
 }
 
 // Animation configuration for smooth drawer effect
-const ANIMATION_CONFIG = {
+export const ANIMATION_CONFIG = {
   duration: 300,
   useNativeDriver: true,
   // Scale reduction per stack level
@@ -27,7 +27,7 @@ const ANIMATION_CONFIG = {
   // Vertical offset per stack level (drawer effect)
   stackOffset: 10,
   // Maximum stack depth to show
-  maxVisibleStack: 5,
+  maxVisibleStack: 6,
   // Opacity reduction per stack level
   opacityReduction: 0.08,
   // Slide distance
@@ -252,18 +252,19 @@ export const Toast: React.FC<ToastProps> = ({
 
   // Animate stack position changes smoothly
   useEffect(() => {
+    // Use spring animation for smoother interruption handling during rapid updates
     Animated.parallel([
-      Animated.timing(scale, {
+      Animated.spring(scale, {
         toValue: targetScale,
-        duration: ANIMATION_CONFIG.duration,
-        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
+        speed: 20, // Adjust speed to match approx 300ms feel
+        bounciness: 0,
       }),
-      Animated.timing(stackTranslateY, {
+      Animated.spring(stackTranslateY, {
         toValue: targetStackOffset,
-        duration: ANIMATION_CONFIG.duration,
-        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
+        speed: 20,
+        bounciness: 0,
       }),
       Animated.timing(opacity, {
         toValue: isVisible ? targetOpacity : 0,

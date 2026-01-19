@@ -8,11 +8,18 @@
 
 A modern, highly customizable toast notification library for React Native with full TypeScript support. Features **drawer-style stacking** for multiple toasts, beautiful colored backgrounds, smooth animations, and flexible icon configuration. Works flawlessly on both iOS and Android.
 
-## ✨ Features
-
-- 🎨 **Colorful Design** - Each toast type has its own background color (green for success, red for error, etc.) with white text
 - 📚 **Drawer-Style Stacking** - Multiple toasts stack with the newest in front, older ones scaled behind with smooth animations
 - 🎭 **Icon Configuration** - Show/hide leading icons and close buttons per toast
+
+<p align="center">
+  <img src="./public/top.png" width="300" alt="Top Toast">
+  <img src="./public/bottom.png" width="300" alt="Bottom Toast">
+  <img src="./public/stack.png" width="300" alt="Stack View">
+  <img src="./public/expand.png" width="300" alt="Drawer Style">
+</p>
+
+## ✨ Features
+
 - ⚡ **Smooth Animations** - Beautiful slide-in/out with scale and opacity transitions using native driver
 - 📱 **Cross-Platform** - Works flawlessly on iOS and Android
 - 👆 **Swipeable** - Swipe to dismiss the front toast

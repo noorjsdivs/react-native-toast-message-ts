@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, BackHandler } from 'react-native';
 import { toastManager } from './ToastManager';
-import { Toast } from './Toast';
+import { Toast, ANIMATION_CONFIG } from './Toast';
 import {
   ToastConfig,
   ToastConfigParams,
@@ -252,6 +252,32 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
     };
   }, [handleShow, handleHide]);
 
+  // Handle Close All
+  const handleCloseAll = useCallback(() => {
+    setIsExpanded(false);
+    // Dismiss all toasts immediately or with animation?
+    // Let's clear the queue immediately for "Close All" as it's a hard reset action
+    autoHideTimersRef.current.forEach(timer => clearTimeout(timer));
+    autoHideTimersRef.current.clear();
+    setToastQueue([]);
+    setClosingToasts(new Set());
+  }, []);
+
+  // Back button handler for Android
+  useEffect(() => {
+    const handleBackPress = () => {
+      if (isExpanded) {
+        setIsExpanded(false);
+        return true; // Use valid native back behavior
+      }
+      return false;
+    };
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+
+    return () => backHandler.remove();
+  }, [isExpanded]);
+
   if (!toastQueue || toastQueue.length === 0) {
     return null;
   }
@@ -260,8 +286,9 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
   // Queue: [oldest, ..., newest]
   // We want the last N items for the stack display
   // In collapsed view: newest is on top (stackIndex 0)
-  // In expanded view: show all visible toasts in a list
-  const visibleToasts = toastQueue.slice(-maxVisibleToasts);
+  // In expanded view: show up to 6 toasts (or configurable?)
+  const limit = isExpanded ? 6 : maxVisibleToasts;
+  const visibleToasts = toastQueue.slice(-limit);
 
   return (
     <View style={styles.container} pointerEvents="box-none">
@@ -308,6 +335,26 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
           />
         );
       })}
+
+      {isExpanded && visibleToasts.length > 0 && (
+        <TouchableOpacity
+          style={[
+            styles.closeAllButton,
+            defaultPosition === 'top'
+              ? {
+                  top: topOffset + visibleToasts.length * ANIMATION_CONFIG.expandedHeight + 10,
+                }
+              : {
+                  bottom:
+                    bottomOffset + visibleToasts.length * ANIMATION_CONFIG.expandedHeight + 10,
+                },
+          ]}
+          onPress={handleCloseAll}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.closeAllText}>Close All</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -321,5 +368,20 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: 9999,
     elevation: 9999,
+  },
+  closeAllButton: {
+    position: 'absolute',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    zIndex: 10000,
+    elevation: 10000,
+  },
+  closeAllText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
